@@ -71,7 +71,8 @@ python main.py --video-dir videos --output cross_video_output --frame-interval 5
 ### 1. Visuelt Tankediagram (Mind Map)
 Diagrammet illustrerer koblingene mellom de tre videoene og personene. Gullringer indikerer **kryss-video personer** som opptrer i flere videoer, mens kantetikettene angir antall observasjoner og tidsintervall:
 
-![Tankediagram: Koblinger mellom videoer og personer](cross_video_output/mindmap_diagram.png)
+<img width="1890" height="961" alt="image" src="https://github.com/user-attachments/assets/e352a4b2-6373-4a07-a73c-4a2cc68902a3" />
+
 
 ---
 
