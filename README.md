@@ -43,6 +43,15 @@ An intelligent, lightweight, and robust Python system that extracts human faces 
 
 ---
 
+## Eksempel
+
+<img width="945" height="481" alt="image" src="https://github.com/user-attachments/assets/150a3e51-b101-4cb5-83f9-9a7bd0c1cdd7" />
+<img width="941" height="486" alt="image" src="https://github.com/user-attachments/assets/63e96b0f-2f22-47b8-bfbc-1b25ba322f17" />
+<img width="935" height="488" alt="image" src="https://github.com/user-attachments/assets/013d39bd-4f60-409d-afd3-9d5433443011" />
+<img width="920" height="485" alt="image" src="https://github.com/user-attachments/assets/415a14c3-b99c-469e-a734-665b1c637460" />
+<img width="906" height="476" alt="image" src="https://github.com/user-attachments/assets/b2b6bf6e-d867-4b8c-af4c-cdaaa93aedfa" />
+<img width="941" height="484" alt="image" src="https://github.com/user-attachments/assets/cbbb66cd-57a4-4da3-b1f8-72d0c4bfb0fe" />
+
 ## 📊 Resultater & Eksempel: Kryss-video analyse av 3 videoer (`cross_video_output/`)
 
 Dette eksempelet er kjørt direkte opp mot testdatasettet som ligger i GitHub-mappen [**`videos/`**](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/tree/main/videos).
