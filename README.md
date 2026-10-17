@@ -10,7 +10,7 @@ An intelligent, lightweight, and robust Python system that extracts human faces 
 > **Alle bilder og videoer i dette prosjektet er syntetiske og AI-generert med Google Gemini.**
 > 
 > * **Bilder:** Portrettbildene i `data/` (`person_a.jpg`, `person_b.jpg`, `person_c.jpg`).
-> * **Videoer:** `gemini_generated_video_d6f2b3bb.mp4`, `sample_test_video.mp4`, `sample_videos/*.mp4`, og flervideodatasettet i `videos/` (`gemini_generated_video_2205156f.mp4`, `gemini_generated_video_662b64d0.mp4`, `gemini_generated_video_ab8243d5.mp4`).
+> * **Videoer:** `gemini_generated_video_d6f2b3bb.mp4`, `sample_test_video.mp4`, `sample_videos/*.mp4`, og flervideodatasettet i [`videos/`](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/tree/main/videos) ([`gemini_generated_video_2205156f.mp4`](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/blob/main/videos/gemini_generated_video_2205156f.mp4), [`gemini_generated_video_662b64d0.mp4`](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/blob/main/videos/gemini_generated_video_662b64d0.mp4), [`gemini_generated_video_ab8243d5.mp4`](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/blob/main/videos/gemini_generated_video_ab8243d5.mp4)).
 > 
 > Ingen av ansiktene eller videoklippene forestiller ekte personer; alt demonstrasjonsmateriale er generert ved hjelp av Gemini.
 
@@ -45,7 +45,7 @@ An intelligent, lightweight, and robust Python system that extracts human faces 
 
 ## 📊 Resultater & Eksempel: Kryss-video analyse av 3 videoer (`cross_video_output/`)
 
-Dette er resultatene fra en reell testkjøring på 3 videoer i mappen `videos/`.
+Dette eksempelet er kjørt direkte opp mot testdatasettet som ligger i GitHub-mappen [**`videos/`**](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/tree/main/videos).
 
 Kjørt med:
 ```powershell
@@ -75,10 +75,10 @@ Algoritmen oppdaget og separerte automatisk 12 distinkte personidentiteter på t
 
 ### 3. Nøkkeltall fra analysen
 
-* **Kildevideoer analysert:** 3 videoer
-  * `gemini_generated_video_2205156f.mp4` (99 ansikter detektert)
-  * `gemini_generated_video_662b64d0.mp4` (104 ansikter detektert)
-  * `gemini_generated_video_ab8243d5.mp4` (33 ansikter detektert)
+* **Kildevideoer analysert fra [videos/](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/tree/main/videos):**
+  * [`gemini_generated_video_2205156f.mp4`](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/blob/main/videos/gemini_generated_video_2205156f.mp4) (11.5 MB — 99 ansikter detektert)
+  * [`gemini_generated_video_662b64d0.mp4`](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/blob/main/videos/gemini_generated_video_662b64d0.mp4) (2.5 MB — 104 ansikter detektert)
+  * [`gemini_generated_video_ab8243d5.mp4`](https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/blob/main/videos/gemini_generated_video_ab8243d5.mp4) (6.5 MB — 33 ansikter detektert)
 * **Totalt detekterte ansikter:** 236 ansikter
 * **Oppdagede unike personer:** 12 identitetsklynger (`person_000` til `person_011`)
 * **Uklassifisert støy:** Kun 2 ansikter (`unclustered/` - under 1% støy)
@@ -162,7 +162,7 @@ Kjør skriptet direkte for en interaktiv meny eller send inn parametere:
 # Interaktiv meny (lar deg velge videoer eller kjøre demo direkte):
 .\run_clusterer.ps1
 
-# Prosesser en hel mappe med videoer:
+# Prosesser testmappen med de 3 inkluderte videoene:
 .\run_clusterer.ps1 -VideoDir "videos" -Output "cross_video_output"
 
 # Prosesser spesifikke videoer:
@@ -186,7 +186,7 @@ chmod +x run_clusterer.sh
 # Rask syntetisk demo:
 ./run_clusterer.sh --demo
 
-# Skann en hel mappe med videoer:
+# Skann mappen med de 3 inkluderte videoene:
 ./run_clusterer.sh --dir "videos" --output "cross_video_output"
 ```
 
@@ -195,11 +195,11 @@ chmod +x run_clusterer.sh
 ### 🐍 Direkte med Python:
 
 ```bash
-# Prosesser en hel mappe med videoer:
+# Prosesser en hel mappe med videoer (f.eks. den inkluderte videos/-mappen):
 python main.py --video-dir "videos" --output "cross_video_output" --frame-interval 5
 
 # Oppgi flere videofiler direkte:
-python main.py --videos "video1.mp4" "video2.mp4" --output "kryss_resultater"
+python main.py --videos "videos/gemini_generated_video_2205156f.mp4" "videos/gemini_generated_video_662b64d0.mp4" --output "kryss_resultater"
 
 # Enkeltvideo:
 python main.py --video "gemini_generated_video_d6f2b3bb.mp4" --output "resultater" --frame-interval 5
@@ -245,7 +245,7 @@ python main.py --video "gemini_generated_video_d6f2b3bb.mp4" --output "resultate
 ├── sample_videos/                      # Genererte syntetiske testvideoer (2 videoer med felles person)
 │   ├── video_intervju_del1.mp4
 │   └── video_intervju_del2.mp4
-├── videos/                             # Flervideo-testsett (Gemini-generert)
+├── videos/                             # Flervideo-testsett (Gemini-generert): https://github.com/roblar658/faceImagesExtractAndClusterFromVideo/tree/main/videos
 │   ├── gemini_generated_video_2205156f.mp4
 │   ├── gemini_generated_video_662b64d0.mp4
 │   └── gemini_generated_video_ab8243d5.mp4
