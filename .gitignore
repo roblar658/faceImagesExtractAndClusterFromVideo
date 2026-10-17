@@ -1,0 +1,19 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large model binaries (auto-downloaded by script on first run)
+models/*.onnx
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

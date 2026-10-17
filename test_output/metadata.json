@@ -1,0 +1,336 @@
+{
+  "clustering_stats": {
+    "num_clusters": 2,
+    "noise_count": 0,
+    "total_faces": 24,
+    "method": "dbscan",
+    "eps": 0.45,
+    "min_samples": 2,
+    "silhouette_score": 0.8954
+  },
+  "cluster_breakdown": {
+    "person_000": {
+      "cluster_id": 0,
+      "count": 11
+    },
+    "person_001": {
+      "cluster_id": 1,
+      "count": 13
+    }
+  },
+  "faces": [
+    {
+      "frame_idx": 0,
+      "timestamp_sec": 0.0,
+      "bbox": [
+        154,
+        212,
+        72,
+        92
+      ],
+      "confidence": 0.9421,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0001_frame000000_t000.00s.jpg"
+    },
+    {
+      "frame_idx": 5,
+      "timestamp_sec": 0.2,
+      "bbox": [
+        171,
+        208,
+        72,
+        95
+      ],
+      "confidence": 0.9421,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0002_frame000005_t000.20s.jpg"
+    },
+    {
+      "frame_idx": 10,
+      "timestamp_sec": 0.4,
+      "bbox": [
+        181,
+        198,
+        73,
+        94
+      ],
+      "confidence": 0.9463,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0003_frame000010_t000.40s.jpg"
+    },
+    {
+      "frame_idx": 15,
+      "timestamp_sec": 0.6,
+      "bbox": [
+        181,
+        189,
+        72,
+        95
+      ],
+      "confidence": 0.9425,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0004_frame000015_t000.60s.jpg"
+    },
+    {
+      "frame_idx": 20,
+      "timestamp_sec": 0.8,
+      "bbox": [
+        173,
+        184,
+        69,
+        91
+      ],
+      "confidence": 0.9485,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0005_frame000020_t000.80s.jpg"
+    },
+    {
+      "frame_idx": 25,
+      "timestamp_sec": 1.0,
+      "bbox": [
+        154,
+        180,
+        71,
+        94
+      ],
+      "confidence": 0.9461,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0006_frame000025_t001.00s.jpg"
+    },
+    {
+      "frame_idx": 30,
+      "timestamp_sec": 1.2,
+      "bbox": [
+        138,
+        182,
+        69,
+        95
+      ],
+      "confidence": 0.9453,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0007_frame000030_t001.20s.jpg"
+    },
+    {
+      "frame_idx": 35,
+      "timestamp_sec": 1.4,
+      "bbox": [
+        127,
+        190,
+        70,
+        96
+      ],
+      "confidence": 0.9456,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0008_frame000035_t001.40s.jpg"
+    },
+    {
+      "frame_idx": 35,
+      "timestamp_sec": 1.4,
+      "bbox": [
+        537,
+        190,
+        92,
+        127
+      ],
+      "confidence": 0.9222,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0001_frame000035_t001.40s.jpg"
+    },
+    {
+      "frame_idx": 40,
+      "timestamp_sec": 1.6,
+      "bbox": [
+        127,
+        197,
+        70,
+        96
+      ],
+      "confidence": 0.9456,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0009_frame000040_t001.60s.jpg"
+    },
+    {
+      "frame_idx": 40,
+      "timestamp_sec": 1.6,
+      "bbox": [
+        555,
+        197,
+        91,
+        132
+      ],
+      "confidence": 0.9276,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0002_frame000040_t001.60s.jpg"
+    },
+    {
+      "frame_idx": 45,
+      "timestamp_sec": 1.8,
+      "bbox": [
+        135,
+        207,
+        71,
+        93
+      ],
+      "confidence": 0.9383,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0010_frame000045_t001.80s.jpg"
+    },
+    {
+      "frame_idx": 45,
+      "timestamp_sec": 1.8,
+      "bbox": [
+        559,
+        210,
+        89,
+        128
+      ],
+      "confidence": 0.9262,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0003_frame000045_t001.80s.jpg"
+    },
+    {
+      "frame_idx": 50,
+      "timestamp_sec": 2.0,
+      "bbox": [
+        154,
+        210,
+        70,
+        92
+      ],
+      "confidence": 0.9413,
+      "cluster_id": 0,
+      "saved_path": "person_000\\face_0011_frame000050_t002.00s.jpg"
+    },
+    {
+      "frame_idx": 50,
+      "timestamp_sec": 2.0,
+      "bbox": [
+        551,
+        228,
+        92,
+        121
+      ],
+      "confidence": 0.9174,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0004_frame000050_t002.00s.jpg"
+    },
+    {
+      "frame_idx": 55,
+      "timestamp_sec": 2.2,
+      "bbox": [
+        533,
+        229,
+        90,
+        130
+      ],
+      "confidence": 0.9199,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0005_frame000055_t002.20s.jpg"
+    },
+    {
+      "frame_idx": 60,
+      "timestamp_sec": 2.4,
+      "bbox": [
+        515,
+        227,
+        93,
+        128
+      ],
+      "confidence": 0.9235,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0006_frame000060_t002.40s.jpg"
+    },
+    {
+      "frame_idx": 65,
+      "timestamp_sec": 2.6,
+      "bbox": [
+        507,
+        212,
+        91,
+        124
+      ],
+      "confidence": 0.9318,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0007_frame000065_t002.60s.jpg"
+    },
+    {
+      "frame_idx": 70,
+      "timestamp_sec": 2.8,
+      "bbox": [
+        510,
+        197,
+        95,
+        135
+      ],
+      "confidence": 0.9303,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0008_frame000070_t002.80s.jpg"
+    },
+    {
+      "frame_idx": 75,
+      "timestamp_sec": 3.0,
+      "bbox": [
+        529,
+        193,
+        91,
+        124
+      ],
+      "confidence": 0.9188,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0009_frame000075_t003.00s.jpg"
+    },
+    {
+      "frame_idx": 80,
+      "timestamp_sec": 3.2,
+      "bbox": [
+        539,
+        190,
+        95,
+        125
+      ],
+      "confidence": 0.9203,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0010_frame000080_t003.20s.jpg"
+    },
+    {
+      "frame_idx": 85,
+      "timestamp_sec": 3.4,
+      "bbox": [
+        557,
+        198,
+        91,
+        132
+      ],
+      "confidence": 0.9221,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0011_frame000085_t003.40s.jpg"
+    },
+    {
+      "frame_idx": 90,
+      "timestamp_sec": 3.6,
+      "bbox": [
+        559,
+        215,
+        90,
+        127
+      ],
+      "confidence": 0.921,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0012_frame000090_t003.60s.jpg"
+    },
+    {
+      "frame_idx": 95,
+      "timestamp_sec": 3.8,
+      "bbox": [
+        545,
+        226,
+        95,
+        126
+      ],
+      "confidence": 0.9245,
+      "cluster_id": 1,
+      "saved_path": "person_001\\face_0013_frame000095_t003.80s.jpg"
+    }
+  ],
+  "montage_path": "identities_montage.jpg"
+}
