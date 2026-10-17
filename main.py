@@ -1,31 +1,62 @@
 """
-Command-line interface for video face recognition and clustering.
+Command-line interface for video face recognition, cross-video clustering,
+timestamp jumping, and mind map visualizations.
 
 Usage:
+  # Single video:
   python main.py --video path/to/video.mp4 --output results/
+
+  # Multiple videos (Cross-video clustering):
+  python main.py --videos video1.mp4 video2.mp4 video3.mp4 --output cross_video_results/
+
+  # Whole folder of videos:
+  python main.py --video-dir path/to/videos/ --output results/
 """
 
 import os
 import sys
+import glob
 import argparse
+from typing import List
+
+# Ensure terminal stdout/stderr uses UTF-8 where available
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 from clusterer import VideoFaceClusterer
+
+
+VALID_VIDEO_EXTS = {".mp4", ".avi", ".mkv", ".mov", ".webm", ".m4v"}
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Extract, recognize, and cluster faces from a video into organized folders by person ID."
+        description="Extract, recognize, and cluster faces across one or multiple videos into organized folders with timestamp jump links and mind map visualization."
     )
     parser.add_argument(
         "--video",
+        "--videos",
+        dest="videos",
         type=str,
-        required=True,
-        help="Path to the input video file (e.g., .mp4, .avi, .mkv, .mov).",
+        nargs="+",
+        default=None,
+        help="Path(s) to one or more input video files (e.g., --video v1.mp4 v2.mp4 or glob pattern 'vids/*.mp4').",
+    )
+    parser.add_argument(
+        "--video-dir",
+        type=str,
+        default=None,
+        help="Directory containing video files to process all videos inside it.",
     )
     parser.add_argument(
         "--output",
         type=str,
         default="face_clusters_output",
-        help="Directory where clustered face folders, metadata, and montage will be saved (default: face_clusters_output).",
+        help="Directory where clustered face folders, metadata, jump files, and mind map will be saved (default: face_clusters_output).",
     )
     parser.add_argument(
         "--frame-interval",
@@ -79,7 +110,7 @@ def parse_args():
         "--max-frames",
         type=int,
         default=None,
-        help="Maximum total frames to process from the video (useful for quick previews or testing).",
+        help="Maximum total frames to process per video (useful for quick previews or testing).",
     )
     parser.add_argument(
         "--models-dir",
@@ -90,16 +121,61 @@ def parse_args():
     return parser.parse_args()
 
 
+def collect_video_files(video_args: List[str], video_dir: str = None) -> List[str]:
+    """Collects and validates video files from arguments and directories."""
+    discovered: List[str] = []
+
+    if video_args:
+        for item in video_args:
+            # Handle possible wildcard glob patterns
+            matches = glob.glob(item)
+            if matches:
+                discovered.extend(matches)
+            elif os.path.exists(item):
+                discovered.append(item)
+            else:
+                print(f"[!] Warning: Video path '{item}' not found, skipping.", file=sys.stderr)
+
+    if video_dir:
+        if not os.path.exists(video_dir):
+            print(f"[!] Warning: Video directory '{video_dir}' does not exist.", file=sys.stderr)
+        else:
+            for root, _, files in os.walk(video_dir):
+                for f in files:
+                    ext = os.path.splitext(f)[1].lower()
+                    if ext in VALID_VIDEO_EXTS:
+                        discovered.append(os.path.join(root, f))
+
+    # Deduplicate while preserving order
+    unique_videos: List[str] = []
+    seen = set()
+    for v in discovered:
+        norm = os.path.normpath(os.path.abspath(v))
+        if norm not in seen and os.path.isfile(norm):
+            seen.add(norm)
+            unique_videos.append(v)
+
+    return unique_videos
+
+
 def main():
     args = parse_args()
 
-    if not os.path.exists(args.video):
-        print(f"Error: Video file '{args.video}' does not exist.", file=sys.stderr)
+    video_files = collect_video_files(args.videos, args.video_dir)
+    if not video_files:
+        print("Error: No valid video files specified. Use --video / --videos or --video-dir.", file=sys.stderr)
         sys.exit(1)
 
-    print("=" * 65)
-    print("   VIDEO FACE RECOGNITION & CLUSTERING PIPELINE")
-    print("=" * 65)
+    print("=" * 70)
+    print("   VIDEO FACE RECOGNITION, CLUSTERING & MIND MAP PIPELINE")
+    print("=" * 70)
+    print(f"[*] Total Videos to process: {len(video_files)}")
+    for i, v in enumerate(video_files, 1):
+        print(f"    {i}. {v}")
+    print(f"[*] Target Output Directory: {os.path.abspath(args.output)}")
+    print(f"[*] Sampling frame interval: Every {args.frame_interval} frame(s)")
+    print(f"[*] Clustering Algorithm:   {args.method.upper()} (eps={args.eps})")
+    print("=" * 70)
 
     clusterer = VideoFaceClusterer(
         models_dir=args.models_dir,
@@ -108,20 +184,20 @@ def main():
         crop_margin=args.crop_margin,
     )
 
-    # 1. Detect faces & extract embeddings
-    face_records = clusterer.process_video(
-        video_path=args.video,
+    # 1. Detect faces & extract embeddings across all videos
+    face_records = clusterer.process_videos(
+        video_paths=video_files,
         frame_interval=args.frame_interval,
         max_frames=args.max_frames,
     )
 
     if not face_records:
-        print("[!] No faces were detected in the video with the current thresholds.")
+        print("\n[!] No faces were detected across the provided videos with the current thresholds.")
         print("    Tips: Try lowering --score-thresh (e.g. 0.6) or --min-face-size (e.g. 25).")
         sys.exit(0)
 
-    # 2. Cluster faces by identity
-    print(f"\n[*] Clustering {len(face_records)} face embeddings using {args.method.upper()}...")
+    # 2. Cluster faces across all videos
+    print(f"\n[*] Clustering {len(face_records)} face embedding(s) using {args.method.upper()}...")
     clustering_stats = clusterer.cluster_faces(
         face_records=face_records,
         method=args.method,
@@ -129,23 +205,33 @@ def main():
         min_samples=args.min_samples,
     )
 
-    print(f"[+] Discovered {clustering_stats['num_clusters']} distinct person identity cluster(s).")
+    num_clusters = clustering_stats.get("num_clusters", 0)
+    cross_video_count = clustering_stats.get("cross_video_count", 0)
+    print(f"[+] Discovered {num_clusters} distinct person identity cluster(s).")
+    if cross_video_count > 0:
+        print(f"[+] [CROSS-VIDEO] Found {cross_video_count} identity/identities appearing across multiple videos!")
     if clustering_stats.get("noise_count"):
         print(f"    Unclustered noise/outliers: {clustering_stats['noise_count']} face(s).")
     if clustering_stats.get("silhouette_score") is not None:
         print(f"    Cluster Silhouette Score: {clustering_stats['silhouette_score']} (-1 to +1, higher is tighter separation)")
 
-    # 3. Save faces into folders by person ID
-    clusterer.save_results(
+    # 3. Save faces, jump files, CSV, static mind map, and interactive dashboard
+    metadata = clusterer.save_results(
         face_records=face_records,
         output_dir=args.output,
         stats=clustering_stats,
         use_aligned=args.use_aligned,
+        video_paths=video_files,
     )
 
-    print("\n" + "=" * 65)
-    print(f"DONE! All face pictures are categorized and saved in: {os.path.abspath(args.output)}")
-    print("=" * 65)
+    print("\n" + "=" * 70)
+    print(" PIPELINE COMPLETE!")
+    print(f" - Folders & Images:      {os.path.abspath(args.output)}")
+    print(f" - Mind Map Diagram (PNG):{os.path.abspath(os.path.join(args.output, 'mindmap_diagram.png'))}")
+    print(f" - Interactive Dashboard: {os.path.abspath(os.path.join(args.output, 'index.html'))}")
+    print(f" - Timestamps (CSV):      {os.path.abspath(os.path.join(args.output, 'timestamps.csv'))}")
+    print(f" - Identity Montage:      {os.path.abspath(os.path.join(args.output, 'identities_montage.jpg'))}")
+    print("=" * 70)
 
 
 if __name__ == "__main__":

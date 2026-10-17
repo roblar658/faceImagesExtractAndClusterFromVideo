@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Ansiktsklynging & Tankediagram Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e17;
+      --bg-card: #121826;
+      --bg-card-hover: #1a2236;
+      --border: #1e293b;
+      --border-light: #334155;
+      --accent: #38bdf8;
+      --accent-rgb: 56, 189, 248;
+      --gold: #f59e0b;
+      --green: #10b981;
+      --purple: #a855f7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    header {
+      background: rgba(18, 24, 38, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      font-size: 1.8rem;
+    }
+    .brand-text h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .brand-text p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .stats-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .stat-pill {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stat-pill strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .stat-pill.gold strong { color: var(--gold); }
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      background: var(--bg-dark);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .nav-btn.active {
+      background: var(--accent);
+      color: #0b0f19;
+      box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.35);
+    }
+    main {
+      padding: 24px 28px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* MIND MAP TAB */
+    .mindmap-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+      height: 780px;
+    }
+    @media (max-width: 1024px) {
+      .mindmap-wrapper { grid-template-columns: 1fr; height: auto; }
+    }
+    .canvas-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .canvas-toolbar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .tool-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .tool-btn:hover { background: #334155; }
+    #mindmapCanvas {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+    #mindmapCanvas:active { cursor: grabbing; }
+    .sidebar-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      max-height: 780px;
+    }
+    .sidebar-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .selected-node-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .avatar-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 2px solid var(--accent);
+    }
+    .appearance-item {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+    .jump-btn-small {
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .jump-btn-small:hover { background: #0369a1; }
+
+    /* VIDEO PLAYER TAB */
+    .player-layout {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 24px;
+    }
+    @media (max-width: 1100px) {
+      .player-layout { grid-template-columns: 1fr; }
+    }
+    .main-video-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    video#interactivePlayer {
+      width: 100%;
+      border-radius: 12px;
+      background: #000;
+      max-height: 540px;
+    }
+    .player-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .select-dropdown {
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid #334155;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .timeline-list {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      overflow-y: auto;
+      max-height: 700px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .timeline-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #151d2f;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .timeline-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent);
+      transform: translateX(3px);
+    }
+    .timeline-thumb {
+      width: 54px;
+      height: 54px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid #334155;
+    }
+    .timeline-info { flex: 1; }
+    .timeline-time {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+    .timeline-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* GALLERY TAB */
+    .filter-bar {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 14px 20px;
+      border-radius: 12px;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .face-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .face-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      transform: translateY(-2px);
+    }
+    .face-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #000;
+    }
+    .cross-badge {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: var(--gold);
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .face-card-details {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .face-card-details strong { color: #fff; }
+    .time-badge {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* MATRIX TAB */
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .matrix-table th, .matrix-table td {
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .matrix-table th {
+      background: #151d2f;
+      color: #fff;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .matrix-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-text">
+        <h1>Video Ansiktsklynging & Tankediagram</h1>
+        <p>Kryss-video analyse, tidsreferanser og nettverkskoblinger</p>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-pill">Videoer: <strong>3</strong></div>
+      <div class="stat-pill">Unike Personer: <strong>12</strong></div>
+      <div class="stat-pill gold">Kryss-video Personer: <strong>7</strong></div>
+      <div class="stat-pill">Ansikter: <strong>236</strong></div>
+      <div class="stat-pill">Metodikk: <strong>DBSCAN</strong></div>
+    </div>
+
+    <nav class="nav-tabs">
+      <button class="nav-btn active" data-tab="tab-mindmap" onclick="switchTab('tab-mindmap')">Tankediagram</button>
+      <button class="nav-btn" data-tab="tab-player" onclick="switchTab('tab-player')">Videospiller & Tidshopp</button>
+      <button class="nav-btn" data-tab="tab-gallery" onclick="switchTab('tab-gallery')">Ansiktsgalleri</button>
+      <button class="nav-btn" data-tab="tab-matrix" onclick="switchTab('tab-matrix')">Kryss-video Matrise</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 1. MIND MAP TAB -->
+    <section id="tab-mindmap" class="tab-content active">
+      <div class="mindmap-wrapper">
+        <div class="canvas-container">
+          <div class="canvas-toolbar">
+            <button class="tool-btn" onclick="resetCanvasView()">Tilbakestill visning</button>
+            <button class="tool-btn" onclick="zoomCanvas(1.2)">Zoom +</button>
+            <button class="tool-btn" onclick="zoomCanvas(0.8)">Zoom -</button>
+            <span style="font-size: 0.8rem; color: #94a3b8; margin-left: 8px;">Dra noder for å flytte • Klikk node for detaljer</span>
+          </div>
+          <canvas id="mindmapCanvas"></canvas>
+        </div>
+
+        <div class="sidebar-panel" id="mindmapSidebar">
+          <div class="sidebar-title">
+            <span>Valgt Node / Identitet</span>
+          </div>
+          <div id="nodeDetailsPlaceholder" style="color: #94a3b8; font-size: 0.9rem; text-align: center; margin-top: 60px;">
+            Klikk på en person- eller videonode i tankediagrammet for å se alle tidsstempler og opptredener.
+          </div>
+          <div id="nodeDetailsContent" class="selected-node-details" style="display: none;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. VIDEO PLAYER TAB -->
+    <section id="tab-player" class="tab-content">
+      <div class="player-layout">
+        <div class="main-video-box">
+          <div class="player-toolbar">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label for="videoSelect" style="font-weight: 600; font-size: 0.9rem;">Velg Video:</label>
+              <select id="videoSelect" class="select-dropdown" onchange="onVideoSelectChange()">
+                <option value="gemini_generated_video_2205156f">gemini_generated_video_2205156f (99 ansikter)</option><option value="gemini_generated_video_662b64d0">gemini_generated_video_662b64d0 (104 ansikter)</option><option value="gemini_generated_video_ab8243d5">gemini_generated_video_ab8243d5 (33 ansikter)</option>
+              </select>
+            </div>
+            <div id="currentTimestampBadge" class="stat-pill" style="font-family: 'JetBrains Mono', monospace;">
+              Tid: <strong id="playerTimeDisplay">00:00.00</strong>
+            </div>
+          </div>
+
+          <video id="interactivePlayer" controls preload="metadata">
+            <source id="videoPlayerSource" src="" type="video/mp4">
+            Nettleseren støtter ikke video.
+          </video>
+
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button class="tool-btn" onclick="stepPlayer(-1)">-1s</button>
+            <button class="tool-btn" onclick="stepPlayer(-0.1)">-0.1s</button>
+            <button class="tool-btn" onclick="stepPlayer(0.1)">+0.1s</button>
+            <button class="tool-btn" onclick="stepPlayer(1)">+1s</button>
+            <span style="font-size: 0.8rem; color: #94a3b8; margin-left: 8px;">Tips: Klikk på et ansiktskort til høyre for å hoppe direkte til tidspunktet!</span>
+          </div>
+        </div>
+
+        <div class="timeline-list">
+          <div class="sidebar-title">
+            <span>Ansiktsopptredener i valgt video</span>
+          </div>
+          <div id="timelineCardsContainer"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. GALLERY TAB -->
+    <section id="tab-gallery" class="tab-content">
+      <div class="filter-bar">
+        <label style="font-size: 0.9rem; font-weight: 600;">Filtrer etter person:</label>
+        <select id="personFilter" class="select-dropdown" onchange="renderGallery()">
+          <option value="ALL">Alle Personer</option>
+          <option value="0">person_000 (31 bilder)</option><option value="1">person_001 (6 bilder)</option><option value="2">person_002 (15 bilder)</option><option value="3">person_003 (41 bilder)</option><option value="4">person_004 (35 bilder)</option><option value="5">person_005 (41 bilder)</option><option value="6">person_006 (14 bilder)</option><option value="7">person_007 (22 bilder)</option><option value="8">person_008 (6 bilder)</option><option value="9">person_009 (7 bilder)</option><option value="10">person_010 (8 bilder)</option><option value="11">person_011 (8 bilder)</option>
+          <option value="-1">Uklassifisert (Støy)</option>
+        </select>
+
+        <label style="font-size: 0.9rem; font-weight: 600; margin-left: 12px;">Filtrer etter video:</label>
+        <select id="videoFilter" class="select-dropdown" onchange="renderGallery()">
+          <option value="ALL">Alle Videoer</option>
+          <option value="gemini_generated_video_2205156f">gemini_generated_video_2205156f</option><option value="gemini_generated_video_662b64d0">gemini_generated_video_662b64d0</option><option value="gemini_generated_video_ab8243d5">gemini_generated_video_ab8243d5</option>
+        </select>
+
+        <label style="margin-left: 16px; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <input type="checkbox" id="crossOnlyCheck" onchange="renderGallery()">
+          Vis kun kryss-video personer
+        </label>
+      </div>
+
+      <div class="gallery-grid" id="galleryContainer"></div>
+    </section>
+
+    <!-- 4. MATRIX TAB -->
+    <section id="tab-matrix" class="tab-content">
+      <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px;">
+        <h2 style="font-size: 1.2rem; margin-bottom: 6px;">Kryss-video Forekomstmatrise</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
+          Tabellen viser hvilke videoer hver enkelt person opptrer i, totalt antall ansikter, og tidsintervall.
+        </p>
+
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Identitet</th>
+              <th>Type</th>
+              <th>Video: gemini_generated_video_2205156f</th><th>Video: gemini_generated_video_662b64d0</th><th>Video: gemini_generated_video_ab8243d5</th>
+              <th>Totalt Antall</th>
+              <th>Handling</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_000/gemini_generated_video_2205156f/face_0012_frame000305_t012.71s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_000</strong>
+                </div>
+              </td>
+              <td>
+                <span style='background: #f59e0b; color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;'>KRYSS-VIDEO</span>
+              </td>
+              <td><strong>13x</strong> (00:00.625)</td><td><strong>12x</strong> (00:00.625)</td><td><strong>6x</strong> (00:00.625)</td>
+              <td><strong>31 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(0)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_001/gemini_generated_video_2205156f/face_0001_frame000015_t000.62s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_001</strong>
+                </div>
+              </td>
+              <td>
+                <span style='background: #f59e0b; color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;'>KRYSS-VIDEO</span>
+              </td>
+              <td><strong>3x</strong> (00:00.625)</td><td><span style="color: #475569;">-</span></td><td><strong>3x</strong> (00:00.625)</td>
+              <td><strong>6 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(1)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_002/gemini_generated_video_ab8243d5/face_0005_frame000080_t003.33s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_002</strong>
+                </div>
+              </td>
+              <td>
+                <span style='background: #f59e0b; color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;'>KRYSS-VIDEO</span>
+              </td>
+              <td><strong>5x</strong> (00:02.500)</td><td><strong>5x</strong> (00:02.500)</td><td><strong>5x</strong> (00:02.500)</td>
+              <td><strong>15 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(2)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_003/gemini_generated_video_2205156f/face_0004_frame000115_t004.79s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_003</strong>
+                </div>
+              </td>
+              <td>
+                <span style='background: #f59e0b; color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;'>KRYSS-VIDEO</span>
+              </td>
+              <td><strong>17x</strong> (00:04.167)</td><td><strong>17x</strong> (00:04.167)</td><td><strong>7x</strong> (00:04.167)</td>
+              <td><strong>41 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(3)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_004/gemini_generated_video_2205156f/face_0015_frame000420_t017.50s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_004</strong>
+                </div>
+              </td>
+              <td>
+                <span style='background: #f59e0b; color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;'>KRYSS-VIDEO</span>
+              </td>
+              <td><strong>17x</strong> (00:04.167)</td><td><strong>12x</strong> (00:04.583)</td><td><strong>6x</strong> (00:04.167)</td>
+              <td><strong>35 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(4)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_005/gemini_generated_video_ab8243d5/face_0001_frame000145_t006.04s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_005</strong>
+                </div>
+              </td>
+              <td>
+                <span style='background: #f59e0b; color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;'>KRYSS-VIDEO</span>
+              </td>
+              <td><strong>14x</strong> (00:06.042)</td><td><strong>22x</strong> (00:06.042)</td><td><strong>5x</strong> (00:06.042)</td>
+              <td><strong>41 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(5)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_006/gemini_generated_video_2205156f/face_0003_frame000325_t013.54s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_006</strong>
+                </div>
+              </td>
+              <td>
+                <span style='background: #f59e0b; color: #000; font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;'>KRYSS-VIDEO</span>
+              </td>
+              <td><strong>7x</strong> (00:13.125)</td><td><strong>7x</strong> (00:13.125)</td><td><span style="color: #475569;">-</span></td>
+              <td><strong>14 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(6)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_007/gemini_generated_video_2205156f/face_0005_frame000395_t016.46s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_007</strong>
+                </div>
+              </td>
+              <td>
+                <span style='color: #94a3b8; font-size: 0.8rem;'>Enkeltvideo</span>
+              </td>
+              <td><strong>22x</strong> (00:16.042)</td><td><span style="color: #475569;">-</span></td><td><span style="color: #475569;">-</span></td>
+              <td><strong>22 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(7)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_008/gemini_generated_video_662b64d0/face_0006_frame000550_t022.92s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_008</strong>
+                </div>
+              </td>
+              <td>
+                <span style='color: #94a3b8; font-size: 0.8rem;'>Enkeltvideo</span>
+              </td>
+              <td><span style="color: #475569;">-</span></td><td><strong>6x</strong> (00:21.875)</td><td><span style="color: #475569;">-</span></td>
+              <td><strong>6 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(8)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_009/gemini_generated_video_662b64d0/face_0004_frame000570_t023.75s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_009</strong>
+                </div>
+              </td>
+              <td>
+                <span style='color: #94a3b8; font-size: 0.8rem;'>Enkeltvideo</span>
+              </td>
+              <td><span style="color: #475569;">-</span></td><td><strong>7x</strong> (00:23.125)</td><td><span style="color: #475569;">-</span></td>
+              <td><strong>7 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(9)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_010/gemini_generated_video_662b64d0/face_0001_frame000620_t025.83s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_010</strong>
+                </div>
+              </td>
+              <td>
+                <span style='color: #94a3b8; font-size: 0.8rem;'>Enkeltvideo</span>
+              </td>
+              <td><span style="color: #475569;">-</span></td><td><strong>8x</strong> (00:25.833)</td><td><span style="color: #475569;">-</span></td>
+              <td><strong>8 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(10)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="person_011/gemini_generated_video_662b64d0/face_0002_frame000625_t026.04s.jpg" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid #334155;">
+                  <strong>person_011</strong>
+                </div>
+              </td>
+              <td>
+                <span style='color: #94a3b8; font-size: 0.8rem;'>Enkeltvideo</span>
+              </td>
+              <td><span style="color: #475569;">-</span></td><td><strong>8x</strong> (00:25.833)</td><td><span style="color: #475569;">-</span></td>
+              <td><strong>8 ansikter</strong></td>
+              <td>
+                <button class="jump-btn-small" onclick="selectPersonInMindmap(11)">Vis i Tankediagram</button>
+              </td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Embedded Data
+    const FACES_DATA = [{"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 0.625, "timestamp_hms": "00:00.625", "frame_idx": 15, "confidence": 0.9241, "image_path": "person_000/gemini_generated_video_2205156f/face_0001_frame000015_t000.62s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0001_frame000015_t000.62s_jump.html", "bbox": [618, 251, 92, 119]}, {"person_id": 1, "person_label": "person_001", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 0.625, "timestamp_hms": "00:00.625", "frame_idx": 15, "confidence": 0.9162, "image_path": "person_001/gemini_generated_video_2205156f/face_0001_frame000015_t000.62s.jpg", "jump_path": "person_001/gemini_generated_video_2205156f/face_0001_frame000015_t000.62s_jump.html", "bbox": [528, 344, 40, 48]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 0.833, "timestamp_hms": "00:00.833", "frame_idx": 20, "confidence": 0.9357, "image_path": "person_000/gemini_generated_video_2205156f/face_0002_frame000020_t000.83s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0002_frame000020_t000.83s_jump.html", "bbox": [587, 199, 100, 137]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 1.042, "timestamp_hms": "00:01.042", "frame_idx": 25, "confidence": 0.9388, "image_path": "person_000/gemini_generated_video_2205156f/face_0003_frame000025_t001.04s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0003_frame000025_t001.04s_jump.html", "bbox": [583, 197, 104, 137]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 1.25, "timestamp_hms": "00:01.250", "frame_idx": 30, "confidence": 0.9343, "image_path": "person_000/gemini_generated_video_2205156f/face_0004_frame000030_t001.25s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0004_frame000030_t001.25s_jump.html", "bbox": [620, 228, 102, 136]}, {"person_id": 1, "person_label": "person_001", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 1.25, "timestamp_hms": "00:01.250", "frame_idx": 30, "confidence": 0.9097, "image_path": "person_001/gemini_generated_video_2205156f/face_0002_frame000030_t001.25s.jpg", "jump_path": "person_001/gemini_generated_video_2205156f/face_0002_frame000030_t001.25s_jump.html", "bbox": [524, 355, 42, 53]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 1.458, "timestamp_hms": "00:01.458", "frame_idx": 35, "confidence": 0.9433, "image_path": "person_000/gemini_generated_video_2205156f/face_0005_frame000035_t001.46s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0005_frame000035_t001.46s_jump.html", "bbox": [671, 187, 112, 154]}, {"person_id": 1, "person_label": "person_001", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 1.458, "timestamp_hms": "00:01.458", "frame_idx": 35, "confidence": 0.9152, "image_path": "person_001/gemini_generated_video_2205156f/face_0003_frame000035_t001.46s.jpg", "jump_path": "person_001/gemini_generated_video_2205156f/face_0003_frame000035_t001.46s_jump.html", "bbox": [524, 341, 42, 53]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 1.667, "timestamp_hms": "00:01.667", "frame_idx": 40, "confidence": 0.9388, "image_path": "person_000/gemini_generated_video_2205156f/face_0006_frame000040_t001.67s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0006_frame000040_t001.67s_jump.html", "bbox": [663, 142, 112, 150]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 2.5, "timestamp_hms": "00:02.500", "frame_idx": 60, "confidence": 0.9193, "image_path": "person_002/gemini_generated_video_2205156f/face_0001_frame000060_t002.50s.jpg", "jump_path": "person_002/gemini_generated_video_2205156f/face_0001_frame000060_t002.50s_jump.html", "bbox": [544, 117, 127, 195]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 2.708, "timestamp_hms": "00:02.708", "frame_idx": 65, "confidence": 0.946, "image_path": "person_002/gemini_generated_video_2205156f/face_0002_frame000065_t002.71s.jpg", "jump_path": "person_002/gemini_generated_video_2205156f/face_0002_frame000065_t002.71s_jump.html", "bbox": [509, 100, 129, 170]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 2.917, "timestamp_hms": "00:02.917", "frame_idx": 70, "confidence": 0.9456, "image_path": "person_002/gemini_generated_video_2205156f/face_0003_frame000070_t002.92s.jpg", "jump_path": "person_002/gemini_generated_video_2205156f/face_0003_frame000070_t002.92s_jump.html", "bbox": [501, 97, 124, 167]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 3.125, "timestamp_hms": "00:03.125", "frame_idx": 75, "confidence": 0.9452, "image_path": "person_002/gemini_generated_video_2205156f/face_0004_frame000075_t003.12s.jpg", "jump_path": "person_002/gemini_generated_video_2205156f/face_0004_frame000075_t003.12s_jump.html", "bbox": [482, 97, 127, 174]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 3.333, "timestamp_hms": "00:03.333", "frame_idx": 80, "confidence": 0.9491, "image_path": "person_002/gemini_generated_video_2205156f/face_0005_frame000080_t003.33s.jpg", "jump_path": "person_002/gemini_generated_video_2205156f/face_0005_frame000080_t003.33s_jump.html", "bbox": [477, 100, 130, 173]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 4.167, "timestamp_hms": "00:04.167", "frame_idx": 100, "confidence": 0.9126, "image_path": "person_003/gemini_generated_video_2205156f/face_0001_frame000100_t004.17s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0001_frame000100_t004.17s_jump.html", "bbox": [530, 182, 102, 129]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 4.167, "timestamp_hms": "00:04.167", "frame_idx": 100, "confidence": 0.8928, "image_path": "person_004/gemini_generated_video_2205156f/face_0001_frame000100_t004.17s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0001_frame000100_t004.17s_jump.html", "bbox": [768, 405, 78, 106]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 4.375, "timestamp_hms": "00:04.375", "frame_idx": 105, "confidence": 0.8979, "image_path": "person_003/gemini_generated_video_2205156f/face_0002_frame000105_t004.38s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0002_frame000105_t004.38s_jump.html", "bbox": [535, 191, 102, 126]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 4.375, "timestamp_hms": "00:04.375", "frame_idx": 105, "confidence": 0.893, "image_path": "person_004/gemini_generated_video_2205156f/face_0002_frame000105_t004.38s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0002_frame000105_t004.38s_jump.html", "bbox": [772, 398, 85, 114]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 4.583, "timestamp_hms": "00:04.583", "frame_idx": 110, "confidence": 0.9022, "image_path": "person_004/gemini_generated_video_2205156f/face_0003_frame000110_t004.58s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0003_frame000110_t004.58s_jump.html", "bbox": [768, 399, 91, 113]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 4.583, "timestamp_hms": "00:04.583", "frame_idx": 110, "confidence": 0.892, "image_path": "person_003/gemini_generated_video_2205156f/face_0003_frame000110_t004.58s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0003_frame000110_t004.58s_jump.html", "bbox": [534, 197, 107, 129]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 4.792, "timestamp_hms": "00:04.792", "frame_idx": 115, "confidence": 0.9325, "image_path": "person_003/gemini_generated_video_2205156f/face_0004_frame000115_t004.79s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0004_frame000115_t004.79s_jump.html", "bbox": [540, 195, 109, 151]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 4.792, "timestamp_hms": "00:04.792", "frame_idx": 115, "confidence": 0.901, "image_path": "person_004/gemini_generated_video_2205156f/face_0004_frame000115_t004.79s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0004_frame000115_t004.79s_jump.html", "bbox": [762, 402, 90, 111]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 5.0, "timestamp_hms": "00:05.000", "frame_idx": 120, "confidence": 0.915, "image_path": "person_003/gemini_generated_video_2205156f/face_0005_frame000120_t005.00s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0005_frame000120_t005.00s_jump.html", "bbox": [550, 211, 108, 154]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 5.0, "timestamp_hms": "00:05.000", "frame_idx": 120, "confidence": 0.8798, "image_path": "person_004/gemini_generated_video_2205156f/face_0005_frame000120_t005.00s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0005_frame000120_t005.00s_jump.html", "bbox": [766, 391, 71, 103]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 5.208, "timestamp_hms": "00:05.208", "frame_idx": 125, "confidence": 0.9185, "image_path": "person_003/gemini_generated_video_2205156f/face_0006_frame000125_t005.21s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0006_frame000125_t005.21s_jump.html", "bbox": [534, 212, 112, 151]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 5.208, "timestamp_hms": "00:05.208", "frame_idx": 125, "confidence": 0.8764, "image_path": "person_004/gemini_generated_video_2205156f/face_0006_frame000125_t005.21s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0006_frame000125_t005.21s_jump.html", "bbox": [772, 396, 67, 95]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 5.417, "timestamp_hms": "00:05.417", "frame_idx": 130, "confidence": 0.9059, "image_path": "person_003/gemini_generated_video_2205156f/face_0007_frame000130_t005.42s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0007_frame000130_t005.42s_jump.html", "bbox": [524, 213, 111, 145]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 5.417, "timestamp_hms": "00:05.417", "frame_idx": 130, "confidence": 0.881, "image_path": "person_004/gemini_generated_video_2205156f/face_0007_frame000130_t005.42s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0007_frame000130_t005.42s_jump.html", "bbox": [772, 396, 75, 100]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 6.042, "timestamp_hms": "00:06.042", "frame_idx": 145, "confidence": 0.9551, "image_path": "person_005/gemini_generated_video_2205156f/face_0001_frame000145_t006.04s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0001_frame000145_t006.04s_jump.html", "bbox": [627, 129, 112, 163]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 6.25, "timestamp_hms": "00:06.250", "frame_idx": 150, "confidence": 0.9491, "image_path": "person_005/gemini_generated_video_2205156f/face_0002_frame000150_t006.25s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0002_frame000150_t006.25s_jump.html", "bbox": [639, 124, 115, 160]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 6.458, "timestamp_hms": "00:06.458", "frame_idx": 155, "confidence": 0.9444, "image_path": "person_005/gemini_generated_video_2205156f/face_0003_frame000155_t006.46s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0003_frame000155_t006.46s_jump.html", "bbox": [641, 122, 114, 165]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 6.667, "timestamp_hms": "00:06.667", "frame_idx": 160, "confidence": 0.935, "image_path": "person_005/gemini_generated_video_2205156f/face_0004_frame000160_t006.67s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0004_frame000160_t006.67s_jump.html", "bbox": [644, 119, 112, 165]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 6.875, "timestamp_hms": "00:06.875", "frame_idx": 165, "confidence": 0.9351, "image_path": "person_005/gemini_generated_video_2205156f/face_0005_frame000165_t006.88s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0005_frame000165_t006.88s_jump.html", "bbox": [643, 118, 112, 169]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 11.667, "timestamp_hms": "00:11.667", "frame_idx": 280, "confidence": 0.8958, "image_path": "person_000/gemini_generated_video_2205156f/face_0007_frame000280_t011.67s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0007_frame000280_t011.67s_jump.html", "bbox": [560, 189, 86, 111]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 11.875, "timestamp_hms": "00:11.875", "frame_idx": 285, "confidence": 0.9194, "image_path": "person_000/gemini_generated_video_2205156f/face_0008_frame000285_t011.88s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0008_frame000285_t011.88s_jump.html", "bbox": [545, 190, 90, 109]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 12.083, "timestamp_hms": "00:12.083", "frame_idx": 290, "confidence": 0.9383, "image_path": "person_000/gemini_generated_video_2205156f/face_0009_frame000290_t012.08s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0009_frame000290_t012.08s_jump.html", "bbox": [522, 162, 94, 113]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 12.292, "timestamp_hms": "00:12.292", "frame_idx": 295, "confidence": 0.9462, "image_path": "person_000/gemini_generated_video_2205156f/face_0010_frame000295_t012.29s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0010_frame000295_t012.29s_jump.html", "bbox": [486, 142, 97, 127]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 12.5, "timestamp_hms": "00:12.500", "frame_idx": 300, "confidence": 0.9506, "image_path": "person_000/gemini_generated_video_2205156f/face_0011_frame000300_t012.50s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0011_frame000300_t012.50s_jump.html", "bbox": [470, 138, 108, 144]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 12.708, "timestamp_hms": "00:12.708", "frame_idx": 305, "confidence": 0.9531, "image_path": "person_000/gemini_generated_video_2205156f/face_0012_frame000305_t012.71s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0012_frame000305_t012.71s_jump.html", "bbox": [464, 138, 113, 152]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 12.917, "timestamp_hms": "00:12.917", "frame_idx": 310, "confidence": 0.9529, "image_path": "person_000/gemini_generated_video_2205156f/face_0013_frame000310_t012.92s.jpg", "jump_path": "person_000/gemini_generated_video_2205156f/face_0013_frame000310_t012.92s_jump.html", "bbox": [464, 135, 116, 158]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 13.125, "timestamp_hms": "00:13.125", "frame_idx": 315, "confidence": 0.9376, "image_path": "person_006/gemini_generated_video_2205156f/face_0001_frame000315_t013.12s.jpg", "jump_path": "person_006/gemini_generated_video_2205156f/face_0001_frame000315_t013.12s_jump.html", "bbox": [613, 186, 113, 147]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 13.333, "timestamp_hms": "00:13.333", "frame_idx": 320, "confidence": 0.9472, "image_path": "person_006/gemini_generated_video_2205156f/face_0002_frame000320_t013.33s.jpg", "jump_path": "person_006/gemini_generated_video_2205156f/face_0002_frame000320_t013.33s_jump.html", "bbox": [622, 150, 114, 151]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 13.542, "timestamp_hms": "00:13.542", "frame_idx": 325, "confidence": 0.9494, "image_path": "person_006/gemini_generated_video_2205156f/face_0003_frame000325_t013.54s.jpg", "jump_path": "person_006/gemini_generated_video_2205156f/face_0003_frame000325_t013.54s_jump.html", "bbox": [625, 147, 113, 152]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 13.75, "timestamp_hms": "00:13.750", "frame_idx": 330, "confidence": 0.9435, "image_path": "person_006/gemini_generated_video_2205156f/face_0004_frame000330_t013.75s.jpg", "jump_path": "person_006/gemini_generated_video_2205156f/face_0004_frame000330_t013.75s_jump.html", "bbox": [629, 146, 117, 147]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 13.958, "timestamp_hms": "00:13.958", "frame_idx": 335, "confidence": 0.9442, "image_path": "person_006/gemini_generated_video_2205156f/face_0005_frame000335_t013.96s.jpg", "jump_path": "person_006/gemini_generated_video_2205156f/face_0005_frame000335_t013.96s_jump.html", "bbox": [618, 160, 121, 153]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 14.167, "timestamp_hms": "00:14.167", "frame_idx": 340, "confidence": 0.9453, "image_path": "person_006/gemini_generated_video_2205156f/face_0006_frame000340_t014.17s.jpg", "jump_path": "person_006/gemini_generated_video_2205156f/face_0006_frame000340_t014.17s_jump.html", "bbox": [620, 161, 120, 153]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 14.375, "timestamp_hms": "00:14.375", "frame_idx": 345, "confidence": 0.9482, "image_path": "person_006/gemini_generated_video_2205156f/face_0007_frame000345_t014.38s.jpg", "jump_path": "person_006/gemini_generated_video_2205156f/face_0007_frame000345_t014.38s_jump.html", "bbox": [620, 161, 120, 160]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.042, "timestamp_hms": "00:16.042", "frame_idx": 385, "confidence": 0.9292, "image_path": "person_004/gemini_generated_video_2205156f/face_0008_frame000385_t016.04s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0008_frame000385_t016.04s_jump.html", "bbox": [877, 374, 143, 194]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.042, "timestamp_hms": "00:16.042", "frame_idx": 385, "confidence": 0.9119, "image_path": "person_003/gemini_generated_video_2205156f/face_0008_frame000385_t016.04s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0008_frame000385_t016.04s_jump.html", "bbox": [645, 151, 132, 177]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.042, "timestamp_hms": "00:16.042", "frame_idx": 385, "confidence": 0.8933, "image_path": "person_007/gemini_generated_video_2205156f/face_0001_frame000385_t016.04s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0001_frame000385_t016.04s_jump.html", "bbox": [980, 286, 65, 80]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.042, "timestamp_hms": "00:16.042", "frame_idx": 385, "confidence": 0.8842, "image_path": "person_007/gemini_generated_video_2205156f/face_0002_frame000385_t016.04s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0002_frame000385_t016.04s_jump.html", "bbox": [187, 328, 46, 53]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.25, "timestamp_hms": "00:16.250", "frame_idx": 390, "confidence": 0.9315, "image_path": "person_004/gemini_generated_video_2205156f/face_0009_frame000390_t016.25s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0009_frame000390_t016.25s_jump.html", "bbox": [873, 376, 148, 194]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.25, "timestamp_hms": "00:16.250", "frame_idx": 390, "confidence": 0.9163, "image_path": "person_003/gemini_generated_video_2205156f/face_0009_frame000390_t016.25s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0009_frame000390_t016.25s_jump.html", "bbox": [651, 152, 137, 177]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.25, "timestamp_hms": "00:16.250", "frame_idx": 390, "confidence": 0.8896, "image_path": "person_007/gemini_generated_video_2205156f/face_0003_frame000390_t016.25s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0003_frame000390_t016.25s_jump.html", "bbox": [977, 290, 66, 79]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.25, "timestamp_hms": "00:16.250", "frame_idx": 390, "confidence": 0.8807, "image_path": "person_007/gemini_generated_video_2205156f/face_0004_frame000390_t016.25s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0004_frame000390_t016.25s_jump.html", "bbox": [183, 329, 49, 54]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.458, "timestamp_hms": "00:16.458", "frame_idx": 395, "confidence": 0.9399, "image_path": "person_004/gemini_generated_video_2205156f/face_0010_frame000395_t016.46s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0010_frame000395_t016.46s_jump.html", "bbox": [880, 374, 145, 198]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.458, "timestamp_hms": "00:16.458", "frame_idx": 395, "confidence": 0.9225, "image_path": "person_003/gemini_generated_video_2205156f/face_0010_frame000395_t016.46s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0010_frame000395_t016.46s_jump.html", "bbox": [662, 152, 143, 195]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.458, "timestamp_hms": "00:16.458", "frame_idx": 395, "confidence": 0.9102, "image_path": "person_007/gemini_generated_video_2205156f/face_0005_frame000395_t016.46s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0005_frame000395_t016.46s_jump.html", "bbox": [266, 342, 47, 60]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.458, "timestamp_hms": "00:16.458", "frame_idx": 395, "confidence": 0.8928, "image_path": "person_007/gemini_generated_video_2205156f/face_0006_frame000395_t016.46s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0006_frame000395_t016.46s_jump.html", "bbox": [965, 290, 74, 80]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.458, "timestamp_hms": "00:16.458", "frame_idx": 395, "confidence": 0.8774, "image_path": "person_007/gemini_generated_video_2205156f/face_0007_frame000395_t016.46s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0007_frame000395_t016.46s_jump.html", "bbox": [179, 329, 48, 54]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.667, "timestamp_hms": "00:16.667", "frame_idx": 400, "confidence": 0.9408, "image_path": "person_004/gemini_generated_video_2205156f/face_0011_frame000400_t016.67s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0011_frame000400_t016.67s_jump.html", "bbox": [870, 371, 159, 201]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.667, "timestamp_hms": "00:16.667", "frame_idx": 400, "confidence": 0.923, "image_path": "person_003/gemini_generated_video_2205156f/face_0011_frame000400_t016.67s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0011_frame000400_t016.67s_jump.html", "bbox": [673, 163, 146, 206]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.667, "timestamp_hms": "00:16.667", "frame_idx": 400, "confidence": 0.897, "image_path": "person_007/gemini_generated_video_2205156f/face_0008_frame000400_t016.67s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0008_frame000400_t016.67s_jump.html", "bbox": [966, 289, 71, 80]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.667, "timestamp_hms": "00:16.667", "frame_idx": 400, "confidence": 0.869, "image_path": "person_007/gemini_generated_video_2205156f/face_0009_frame000400_t016.67s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0009_frame000400_t016.67s_jump.html", "bbox": [177, 328, 47, 53]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.667, "timestamp_hms": "00:16.667", "frame_idx": 400, "confidence": 0.8607, "image_path": "person_007/gemini_generated_video_2205156f/face_0010_frame000400_t016.67s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0010_frame000400_t016.67s_jump.html", "bbox": [260, 334, 50, 69]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.875, "timestamp_hms": "00:16.875", "frame_idx": 405, "confidence": 0.9366, "image_path": "person_004/gemini_generated_video_2205156f/face_0012_frame000405_t016.88s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0012_frame000405_t016.88s_jump.html", "bbox": [863, 373, 153, 202]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.875, "timestamp_hms": "00:16.875", "frame_idx": 405, "confidence": 0.9292, "image_path": "person_003/gemini_generated_video_2205156f/face_0012_frame000405_t016.88s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0012_frame000405_t016.88s_jump.html", "bbox": [659, 160, 145, 209]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.875, "timestamp_hms": "00:16.875", "frame_idx": 405, "confidence": 0.8977, "image_path": "person_007/gemini_generated_video_2205156f/face_0011_frame000405_t016.88s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0011_frame000405_t016.88s_jump.html", "bbox": [964, 288, 70, 84]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 16.875, "timestamp_hms": "00:16.875", "frame_idx": 405, "confidence": 0.8658, "image_path": "person_007/gemini_generated_video_2205156f/face_0012_frame000405_t016.88s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0012_frame000405_t016.88s_jump.html", "bbox": [173, 329, 48, 53]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.083, "timestamp_hms": "00:17.083", "frame_idx": 410, "confidence": 0.9371, "image_path": "person_004/gemini_generated_video_2205156f/face_0013_frame000410_t017.08s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0013_frame000410_t017.08s_jump.html", "bbox": [858, 378, 151, 203]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.083, "timestamp_hms": "00:17.083", "frame_idx": 410, "confidence": 0.9292, "image_path": "person_003/gemini_generated_video_2205156f/face_0013_frame000410_t017.08s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0013_frame000410_t017.08s_jump.html", "bbox": [634, 144, 142, 193]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.083, "timestamp_hms": "00:17.083", "frame_idx": 410, "confidence": 0.8995, "image_path": "person_007/gemini_generated_video_2205156f/face_0013_frame000410_t017.08s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0013_frame000410_t017.08s_jump.html", "bbox": [964, 287, 70, 84]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.083, "timestamp_hms": "00:17.083", "frame_idx": 410, "confidence": 0.877, "image_path": "person_007/gemini_generated_video_2205156f/face_0014_frame000410_t017.08s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0014_frame000410_t017.08s_jump.html", "bbox": [172, 329, 48, 54]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.292, "timestamp_hms": "00:17.292", "frame_idx": 415, "confidence": 0.9391, "image_path": "person_004/gemini_generated_video_2205156f/face_0014_frame000415_t017.29s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0014_frame000415_t017.29s_jump.html", "bbox": [856, 383, 153, 201]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.292, "timestamp_hms": "00:17.292", "frame_idx": 415, "confidence": 0.9089, "image_path": "person_003/gemini_generated_video_2205156f/face_0014_frame000415_t017.29s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0014_frame000415_t017.29s_jump.html", "bbox": [637, 139, 146, 198]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.292, "timestamp_hms": "00:17.292", "frame_idx": 415, "confidence": 0.8978, "image_path": "person_007/gemini_generated_video_2205156f/face_0015_frame000415_t017.29s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0015_frame000415_t017.29s_jump.html", "bbox": [966, 288, 72, 84]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.292, "timestamp_hms": "00:17.292", "frame_idx": 415, "confidence": 0.8724, "image_path": "person_007/gemini_generated_video_2205156f/face_0016_frame000415_t017.29s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0016_frame000415_t017.29s_jump.html", "bbox": [173, 328, 49, 54]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.5, "timestamp_hms": "00:17.500", "frame_idx": 420, "confidence": 0.9433, "image_path": "person_004/gemini_generated_video_2205156f/face_0015_frame000420_t017.50s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0015_frame000420_t017.50s_jump.html", "bbox": [855, 388, 151, 202]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.5, "timestamp_hms": "00:17.500", "frame_idx": 420, "confidence": 0.9178, "image_path": "person_003/gemini_generated_video_2205156f/face_0015_frame000420_t017.50s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0015_frame000420_t017.50s_jump.html", "bbox": [634, 145, 139, 199]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.5, "timestamp_hms": "00:17.500", "frame_idx": 420, "confidence": 0.8939, "image_path": "person_007/gemini_generated_video_2205156f/face_0017_frame000420_t017.50s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0017_frame000420_t017.50s_jump.html", "bbox": [964, 290, 71, 84]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.5, "timestamp_hms": "00:17.500", "frame_idx": 420, "confidence": 0.8715, "image_path": "person_007/gemini_generated_video_2205156f/face_0018_frame000420_t017.50s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0018_frame000420_t017.50s_jump.html", "bbox": [175, 329, 50, 57]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.708, "timestamp_hms": "00:17.708", "frame_idx": 425, "confidence": 0.9414, "image_path": "person_004/gemini_generated_video_2205156f/face_0016_frame000425_t017.71s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0016_frame000425_t017.71s_jump.html", "bbox": [855, 389, 150, 201]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.708, "timestamp_hms": "00:17.708", "frame_idx": 425, "confidence": 0.9247, "image_path": "person_003/gemini_generated_video_2205156f/face_0016_frame000425_t017.71s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0016_frame000425_t017.71s_jump.html", "bbox": [628, 143, 142, 190]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.708, "timestamp_hms": "00:17.708", "frame_idx": 425, "confidence": 0.8931, "image_path": "person_007/gemini_generated_video_2205156f/face_0019_frame000425_t017.71s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0019_frame000425_t017.71s_jump.html", "bbox": [964, 290, 71, 84]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.708, "timestamp_hms": "00:17.708", "frame_idx": 425, "confidence": 0.8411, "image_path": "person_007/gemini_generated_video_2205156f/face_0020_frame000425_t017.71s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0020_frame000425_t017.71s_jump.html", "bbox": [177, 330, 48, 54]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.917, "timestamp_hms": "00:17.917", "frame_idx": 430, "confidence": 0.939, "image_path": "person_004/gemini_generated_video_2205156f/face_0017_frame000430_t017.92s.jpg", "jump_path": "person_004/gemini_generated_video_2205156f/face_0017_frame000430_t017.92s_jump.html", "bbox": [857, 391, 145, 201]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.917, "timestamp_hms": "00:17.917", "frame_idx": 430, "confidence": 0.9253, "image_path": "person_003/gemini_generated_video_2205156f/face_0017_frame000430_t017.92s.jpg", "jump_path": "person_003/gemini_generated_video_2205156f/face_0017_frame000430_t017.92s_jump.html", "bbox": [623, 143, 147, 191]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.917, "timestamp_hms": "00:17.917", "frame_idx": 430, "confidence": 0.8943, "image_path": "person_007/gemini_generated_video_2205156f/face_0021_frame000430_t017.92s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0021_frame000430_t017.92s_jump.html", "bbox": [964, 291, 69, 82]}, {"person_id": 7, "person_label": "person_007", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.917, "timestamp_hms": "00:17.917", "frame_idx": 430, "confidence": 0.885, "image_path": "person_007/gemini_generated_video_2205156f/face_0022_frame000430_t017.92s.jpg", "jump_path": "person_007/gemini_generated_video_2205156f/face_0022_frame000430_t017.92s_jump.html", "bbox": [179, 332, 46, 55]}, {"person_id": -1, "person_label": "unclustered", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 17.917, "timestamp_hms": "00:17.917", "frame_idx": 430, "confidence": 0.8452, "image_path": "unclustered/gemini_generated_video_2205156f/face_0001_frame000430_t017.92s.jpg", "jump_path": "unclustered/gemini_generated_video_2205156f/face_0001_frame000430_t017.92s_jump.html", "bbox": [323, 263, 71, 75]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 18.125, "timestamp_hms": "00:18.125", "frame_idx": 435, "confidence": 0.9388, "image_path": "person_005/gemini_generated_video_2205156f/face_0006_frame000435_t018.12s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0006_frame000435_t018.12s_jump.html", "bbox": [727, 138, 91, 139]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 18.333, "timestamp_hms": "00:18.333", "frame_idx": 440, "confidence": 0.93, "image_path": "person_005/gemini_generated_video_2205156f/face_0007_frame000440_t018.33s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0007_frame000440_t018.33s_jump.html", "bbox": [724, 137, 92, 145]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 18.542, "timestamp_hms": "00:18.542", "frame_idx": 445, "confidence": 0.9277, "image_path": "person_005/gemini_generated_video_2205156f/face_0008_frame000445_t018.54s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0008_frame000445_t018.54s_jump.html", "bbox": [720, 136, 94, 151]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 18.75, "timestamp_hms": "00:18.750", "frame_idx": 450, "confidence": 0.9148, "image_path": "person_005/gemini_generated_video_2205156f/face_0009_frame000450_t018.75s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0009_frame000450_t018.75s_jump.html", "bbox": [717, 138, 101, 152]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 18.958, "timestamp_hms": "00:18.958", "frame_idx": 455, "confidence": 0.9422, "image_path": "person_005/gemini_generated_video_2205156f/face_0010_frame000455_t018.96s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0010_frame000455_t018.96s_jump.html", "bbox": [720, 141, 95, 143]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 19.167, "timestamp_hms": "00:19.167", "frame_idx": 460, "confidence": 0.9416, "image_path": "person_005/gemini_generated_video_2205156f/face_0011_frame000460_t019.17s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0011_frame000460_t019.17s_jump.html", "bbox": [721, 142, 95, 145]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 19.375, "timestamp_hms": "00:19.375", "frame_idx": 465, "confidence": 0.9332, "image_path": "person_005/gemini_generated_video_2205156f/face_0012_frame000465_t019.38s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0012_frame000465_t019.38s_jump.html", "bbox": [719, 144, 93, 149]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 19.583, "timestamp_hms": "00:19.583", "frame_idx": 470, "confidence": 0.9379, "image_path": "person_005/gemini_generated_video_2205156f/face_0013_frame000470_t019.58s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0013_frame000470_t019.58s_jump.html", "bbox": [718, 146, 96, 146]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_2205156f", "video_path": "../videos/gemini_generated_video_2205156f.mp4", "timestamp_sec": 19.792, "timestamp_hms": "00:19.792", "frame_idx": 475, "confidence": 0.937, "image_path": "person_005/gemini_generated_video_2205156f/face_0014_frame000475_t019.79s.jpg", "jump_path": "person_005/gemini_generated_video_2205156f/face_0014_frame000475_t019.79s_jump.html", "bbox": [719, 146, 96, 145]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 0.625, "timestamp_hms": "00:00.625", "frame_idx": 15, "confidence": 0.907, "image_path": "person_000/gemini_generated_video_662b64d0/face_0001_frame000015_t000.62s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0001_frame000015_t000.62s_jump.html", "bbox": [309, 128, 49, 60]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 0.833, "timestamp_hms": "00:00.833", "frame_idx": 20, "confidence": 0.9094, "image_path": "person_000/gemini_generated_video_662b64d0/face_0002_frame000020_t000.83s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0002_frame000020_t000.83s_jump.html", "bbox": [293, 104, 52, 65]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 1.042, "timestamp_hms": "00:01.042", "frame_idx": 25, "confidence": 0.9197, "image_path": "person_000/gemini_generated_video_662b64d0/face_0003_frame000025_t001.04s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0003_frame000025_t001.04s_jump.html", "bbox": [293, 103, 53, 64]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 1.25, "timestamp_hms": "00:01.250", "frame_idx": 30, "confidence": 0.9147, "image_path": "person_000/gemini_generated_video_662b64d0/face_0004_frame000030_t001.25s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0004_frame000030_t001.25s_jump.html", "bbox": [310, 117, 54, 64]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 1.458, "timestamp_hms": "00:01.458", "frame_idx": 35, "confidence": 0.9116, "image_path": "person_000/gemini_generated_video_662b64d0/face_0005_frame000035_t001.46s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0005_frame000035_t001.46s_jump.html", "bbox": [334, 95, 57, 71]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 1.667, "timestamp_hms": "00:01.667", "frame_idx": 40, "confidence": 0.9093, "image_path": "person_000/gemini_generated_video_662b64d0/face_0006_frame000040_t001.67s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0006_frame000040_t001.67s_jump.html", "bbox": [332, 72, 58, 75]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 2.5, "timestamp_hms": "00:02.500", "frame_idx": 60, "confidence": 0.9287, "image_path": "person_002/gemini_generated_video_662b64d0/face_0001_frame000060_t002.50s.jpg", "jump_path": "person_002/gemini_generated_video_662b64d0/face_0001_frame000060_t002.50s_jump.html", "bbox": [273, 60, 64, 90]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 2.708, "timestamp_hms": "00:02.708", "frame_idx": 65, "confidence": 0.9346, "image_path": "person_002/gemini_generated_video_662b64d0/face_0002_frame000065_t002.71s.jpg", "jump_path": "person_002/gemini_generated_video_662b64d0/face_0002_frame000065_t002.71s_jump.html", "bbox": [253, 48, 66, 90]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 2.917, "timestamp_hms": "00:02.917", "frame_idx": 70, "confidence": 0.9406, "image_path": "person_002/gemini_generated_video_662b64d0/face_0003_frame000070_t002.92s.jpg", "jump_path": "person_002/gemini_generated_video_662b64d0/face_0003_frame000070_t002.92s_jump.html", "bbox": [249, 49, 64, 85]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 3.125, "timestamp_hms": "00:03.125", "frame_idx": 75, "confidence": 0.9361, "image_path": "person_002/gemini_generated_video_662b64d0/face_0004_frame000075_t003.12s.jpg", "jump_path": "person_002/gemini_generated_video_662b64d0/face_0004_frame000075_t003.12s_jump.html", "bbox": [239, 47, 66, 93]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 3.333, "timestamp_hms": "00:03.333", "frame_idx": 80, "confidence": 0.9279, "image_path": "person_002/gemini_generated_video_662b64d0/face_0005_frame000080_t003.33s.jpg", "jump_path": "person_002/gemini_generated_video_662b64d0/face_0005_frame000080_t003.33s_jump.html", "bbox": [238, 48, 64, 90]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 4.167, "timestamp_hms": "00:04.167", "frame_idx": 100, "confidence": 0.9109, "image_path": "person_003/gemini_generated_video_662b64d0/face_0001_frame000100_t004.17s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0001_frame000100_t004.17s_jump.html", "bbox": [263, 90, 55, 67]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 4.375, "timestamp_hms": "00:04.375", "frame_idx": 105, "confidence": 0.8901, "image_path": "person_003/gemini_generated_video_662b64d0/face_0002_frame000105_t004.38s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0002_frame000105_t004.38s_jump.html", "bbox": [265, 93, 53, 66]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 4.583, "timestamp_hms": "00:04.583", "frame_idx": 110, "confidence": 0.9081, "image_path": "person_003/gemini_generated_video_662b64d0/face_0003_frame000110_t004.58s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0003_frame000110_t004.58s_jump.html", "bbox": [265, 96, 54, 68]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 4.583, "timestamp_hms": "00:04.583", "frame_idx": 110, "confidence": 0.8989, "image_path": "person_004/gemini_generated_video_662b64d0/face_0001_frame000110_t004.58s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0001_frame000110_t004.58s_jump.html", "bbox": [385, 199, 40, 55]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 4.792, "timestamp_hms": "00:04.792", "frame_idx": 115, "confidence": 0.9262, "image_path": "person_003/gemini_generated_video_662b64d0/face_0004_frame000115_t004.79s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0004_frame000115_t004.79s_jump.html", "bbox": [268, 100, 57, 72]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 4.792, "timestamp_hms": "00:04.792", "frame_idx": 115, "confidence": 0.908, "image_path": "person_004/gemini_generated_video_662b64d0/face_0002_frame000115_t004.79s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0002_frame000115_t004.79s_jump.html", "bbox": [384, 201, 40, 54]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 5.0, "timestamp_hms": "00:05.000", "frame_idx": 120, "confidence": 0.9156, "image_path": "person_003/gemini_generated_video_662b64d0/face_0005_frame000120_t005.00s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0005_frame000120_t005.00s_jump.html", "bbox": [273, 108, 52, 72]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 5.208, "timestamp_hms": "00:05.208", "frame_idx": 125, "confidence": 0.9041, "image_path": "person_003/gemini_generated_video_662b64d0/face_0006_frame000125_t005.21s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0006_frame000125_t005.21s_jump.html", "bbox": [265, 105, 58, 76]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 5.417, "timestamp_hms": "00:05.417", "frame_idx": 130, "confidence": 0.9122, "image_path": "person_003/gemini_generated_video_662b64d0/face_0007_frame000130_t005.42s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0007_frame000130_t005.42s_jump.html", "bbox": [259, 104, 59, 77]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 6.042, "timestamp_hms": "00:06.042", "frame_idx": 145, "confidence": 0.9436, "image_path": "person_005/gemini_generated_video_662b64d0/face_0001_frame000145_t006.04s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0001_frame000145_t006.04s_jump.html", "bbox": [313, 61, 59, 82]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 6.25, "timestamp_hms": "00:06.250", "frame_idx": 150, "confidence": 0.936, "image_path": "person_005/gemini_generated_video_662b64d0/face_0002_frame000150_t006.25s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0002_frame000150_t006.25s_jump.html", "bbox": [319, 57, 60, 84]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 6.458, "timestamp_hms": "00:06.458", "frame_idx": 155, "confidence": 0.9389, "image_path": "person_005/gemini_generated_video_662b64d0/face_0003_frame000155_t006.46s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0003_frame000155_t006.46s_jump.html", "bbox": [320, 57, 60, 87]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 6.667, "timestamp_hms": "00:06.667", "frame_idx": 160, "confidence": 0.9322, "image_path": "person_005/gemini_generated_video_662b64d0/face_0004_frame000160_t006.67s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0004_frame000160_t006.67s_jump.html", "bbox": [321, 57, 59, 85]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 6.875, "timestamp_hms": "00:06.875", "frame_idx": 165, "confidence": 0.935, "image_path": "person_005/gemini_generated_video_662b64d0/face_0005_frame000165_t006.88s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0005_frame000165_t006.88s_jump.html", "bbox": [320, 58, 59, 86]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 11.875, "timestamp_hms": "00:11.875", "frame_idx": 285, "confidence": 0.9173, "image_path": "person_000/gemini_generated_video_662b64d0/face_0007_frame000285_t011.88s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0007_frame000285_t011.88s_jump.html", "bbox": [270, 94, 47, 57]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 12.083, "timestamp_hms": "00:12.083", "frame_idx": 290, "confidence": 0.9289, "image_path": "person_000/gemini_generated_video_662b64d0/face_0008_frame000290_t012.08s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0008_frame000290_t012.08s_jump.html", "bbox": [258, 78, 49, 61]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 12.292, "timestamp_hms": "00:12.292", "frame_idx": 295, "confidence": 0.9257, "image_path": "person_000/gemini_generated_video_662b64d0/face_0009_frame000295_t012.29s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0009_frame000295_t012.29s_jump.html", "bbox": [243, 75, 49, 62]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 12.5, "timestamp_hms": "00:12.500", "frame_idx": 300, "confidence": 0.93, "image_path": "person_000/gemini_generated_video_662b64d0/face_0010_frame000300_t012.50s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0010_frame000300_t012.50s_jump.html", "bbox": [235, 71, 53, 69]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 12.708, "timestamp_hms": "00:12.708", "frame_idx": 305, "confidence": 0.9398, "image_path": "person_000/gemini_generated_video_662b64d0/face_0011_frame000305_t012.71s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0011_frame000305_t012.71s_jump.html", "bbox": [232, 68, 56, 74]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 12.917, "timestamp_hms": "00:12.917", "frame_idx": 310, "confidence": 0.9394, "image_path": "person_000/gemini_generated_video_662b64d0/face_0012_frame000310_t012.92s.jpg", "jump_path": "person_000/gemini_generated_video_662b64d0/face_0012_frame000310_t012.92s_jump.html", "bbox": [231, 67, 60, 77]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 13.125, "timestamp_hms": "00:13.125", "frame_idx": 315, "confidence": 0.9138, "image_path": "person_006/gemini_generated_video_662b64d0/face_0001_frame000315_t013.12s.jpg", "jump_path": "person_006/gemini_generated_video_662b64d0/face_0001_frame000315_t013.12s_jump.html", "bbox": [306, 91, 58, 72]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 13.333, "timestamp_hms": "00:13.333", "frame_idx": 320, "confidence": 0.9202, "image_path": "person_006/gemini_generated_video_662b64d0/face_0002_frame000320_t013.33s.jpg", "jump_path": "person_006/gemini_generated_video_662b64d0/face_0002_frame000320_t013.33s_jump.html", "bbox": [311, 73, 60, 77]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 13.542, "timestamp_hms": "00:13.542", "frame_idx": 325, "confidence": 0.9299, "image_path": "person_006/gemini_generated_video_662b64d0/face_0003_frame000325_t013.54s.jpg", "jump_path": "person_006/gemini_generated_video_662b64d0/face_0003_frame000325_t013.54s_jump.html", "bbox": [312, 71, 58, 77]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 13.75, "timestamp_hms": "00:13.750", "frame_idx": 330, "confidence": 0.9305, "image_path": "person_006/gemini_generated_video_662b64d0/face_0004_frame000330_t013.75s.jpg", "jump_path": "person_006/gemini_generated_video_662b64d0/face_0004_frame000330_t013.75s_jump.html", "bbox": [313, 69, 57, 76]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 13.958, "timestamp_hms": "00:13.958", "frame_idx": 335, "confidence": 0.9321, "image_path": "person_006/gemini_generated_video_662b64d0/face_0005_frame000335_t013.96s.jpg", "jump_path": "person_006/gemini_generated_video_662b64d0/face_0005_frame000335_t013.96s_jump.html", "bbox": [308, 81, 60, 73]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 14.167, "timestamp_hms": "00:14.167", "frame_idx": 340, "confidence": 0.9328, "image_path": "person_006/gemini_generated_video_662b64d0/face_0006_frame000340_t014.17s.jpg", "jump_path": "person_006/gemini_generated_video_662b64d0/face_0006_frame000340_t014.17s_jump.html", "bbox": [309, 82, 60, 74]}, {"person_id": 6, "person_label": "person_006", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 14.375, "timestamp_hms": "00:14.375", "frame_idx": 345, "confidence": 0.9353, "image_path": "person_006/gemini_generated_video_662b64d0/face_0007_frame000345_t014.38s.jpg", "jump_path": "person_006/gemini_generated_video_662b64d0/face_0007_frame000345_t014.38s_jump.html", "bbox": [310, 80, 59, 80]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.042, "timestamp_hms": "00:16.042", "frame_idx": 385, "confidence": 0.9158, "image_path": "person_003/gemini_generated_video_662b64d0/face_0008_frame000385_t016.04s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0008_frame000385_t016.04s_jump.html", "bbox": [323, 76, 67, 86]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.042, "timestamp_hms": "00:16.042", "frame_idx": 385, "confidence": 0.8949, "image_path": "person_004/gemini_generated_video_662b64d0/face_0003_frame000385_t016.04s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0003_frame000385_t016.04s_jump.html", "bbox": [438, 191, 69, 91]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.25, "timestamp_hms": "00:16.250", "frame_idx": 390, "confidence": 0.9087, "image_path": "person_003/gemini_generated_video_662b64d0/face_0009_frame000390_t016.25s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0009_frame000390_t016.25s_jump.html", "bbox": [330, 80, 67, 84]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.25, "timestamp_hms": "00:16.250", "frame_idx": 390, "confidence": 0.8897, "image_path": "person_004/gemini_generated_video_662b64d0/face_0004_frame000390_t016.25s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0004_frame000390_t016.25s_jump.html", "bbox": [436, 192, 70, 91]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.458, "timestamp_hms": "00:16.458", "frame_idx": 395, "confidence": 0.9209, "image_path": "person_003/gemini_generated_video_662b64d0/face_0010_frame000395_t016.46s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0010_frame000395_t016.46s_jump.html", "bbox": [328, 77, 74, 91]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.458, "timestamp_hms": "00:16.458", "frame_idx": 395, "confidence": 0.9017, "image_path": "person_004/gemini_generated_video_662b64d0/face_0005_frame000395_t016.46s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0005_frame000395_t016.46s_jump.html", "bbox": [437, 190, 74, 96]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.667, "timestamp_hms": "00:16.667", "frame_idx": 400, "confidence": 0.917, "image_path": "person_003/gemini_generated_video_662b64d0/face_0011_frame000400_t016.67s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0011_frame000400_t016.67s_jump.html", "bbox": [336, 86, 74, 100]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.667, "timestamp_hms": "00:16.667", "frame_idx": 400, "confidence": 0.9035, "image_path": "person_004/gemini_generated_video_662b64d0/face_0006_frame000400_t016.67s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0006_frame000400_t016.67s_jump.html", "bbox": [437, 191, 75, 95]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.875, "timestamp_hms": "00:16.875", "frame_idx": 405, "confidence": 0.912, "image_path": "person_003/gemini_generated_video_662b64d0/face_0012_frame000405_t016.88s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0012_frame000405_t016.88s_jump.html", "bbox": [328, 81, 74, 101]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 16.875, "timestamp_hms": "00:16.875", "frame_idx": 405, "confidence": 0.8977, "image_path": "person_004/gemini_generated_video_662b64d0/face_0007_frame000405_t016.88s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0007_frame000405_t016.88s_jump.html", "bbox": [435, 189, 70, 95]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.083, "timestamp_hms": "00:17.083", "frame_idx": 410, "confidence": 0.9161, "image_path": "person_003/gemini_generated_video_662b64d0/face_0013_frame000410_t017.08s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0013_frame000410_t017.08s_jump.html", "bbox": [320, 75, 69, 89]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.083, "timestamp_hms": "00:17.083", "frame_idx": 410, "confidence": 0.8959, "image_path": "person_004/gemini_generated_video_662b64d0/face_0008_frame000410_t017.08s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0008_frame000410_t017.08s_jump.html", "bbox": [432, 191, 69, 93]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.292, "timestamp_hms": "00:17.292", "frame_idx": 415, "confidence": 0.9073, "image_path": "person_003/gemini_generated_video_662b64d0/face_0014_frame000415_t017.29s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0014_frame000415_t017.29s_jump.html", "bbox": [319, 73, 70, 91]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.292, "timestamp_hms": "00:17.292", "frame_idx": 415, "confidence": 0.8892, "image_path": "person_004/gemini_generated_video_662b64d0/face_0009_frame000415_t017.29s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0009_frame000415_t017.29s_jump.html", "bbox": [428, 195, 73, 91]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.5, "timestamp_hms": "00:17.500", "frame_idx": 420, "confidence": 0.9119, "image_path": "person_003/gemini_generated_video_662b64d0/face_0015_frame000420_t017.50s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0015_frame000420_t017.50s_jump.html", "bbox": [318, 74, 71, 94]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.5, "timestamp_hms": "00:17.500", "frame_idx": 420, "confidence": 0.8966, "image_path": "person_004/gemini_generated_video_662b64d0/face_0010_frame000420_t017.50s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0010_frame000420_t017.50s_jump.html", "bbox": [426, 197, 73, 92]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.708, "timestamp_hms": "00:17.708", "frame_idx": 425, "confidence": 0.9151, "image_path": "person_003/gemini_generated_video_662b64d0/face_0016_frame000425_t017.71s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0016_frame000425_t017.71s_jump.html", "bbox": [314, 74, 74, 94]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.708, "timestamp_hms": "00:17.708", "frame_idx": 425, "confidence": 0.8997, "image_path": "person_004/gemini_generated_video_662b64d0/face_0011_frame000425_t017.71s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0011_frame000425_t017.71s_jump.html", "bbox": [426, 197, 73, 92]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.917, "timestamp_hms": "00:17.917", "frame_idx": 430, "confidence": 0.9142, "image_path": "person_003/gemini_generated_video_662b64d0/face_0017_frame000430_t017.92s.jpg", "jump_path": "person_003/gemini_generated_video_662b64d0/face_0017_frame000430_t017.92s_jump.html", "bbox": [313, 73, 74, 93]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 17.917, "timestamp_hms": "00:17.917", "frame_idx": 430, "confidence": 0.8977, "image_path": "person_004/gemini_generated_video_662b64d0/face_0012_frame000430_t017.92s.jpg", "jump_path": "person_004/gemini_generated_video_662b64d0/face_0012_frame000430_t017.92s_jump.html", "bbox": [425, 198, 72, 92]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 18.125, "timestamp_hms": "00:18.125", "frame_idx": 435, "confidence": 0.9028, "image_path": "person_005/gemini_generated_video_662b64d0/face_0006_frame000435_t018.12s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0006_frame000435_t018.12s_jump.html", "bbox": [362, 68, 50, 73]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 18.333, "timestamp_hms": "00:18.333", "frame_idx": 440, "confidence": 0.8945, "image_path": "person_005/gemini_generated_video_662b64d0/face_0007_frame000440_t018.33s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0007_frame000440_t018.33s_jump.html", "bbox": [362, 70, 49, 73]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 18.542, "timestamp_hms": "00:18.542", "frame_idx": 445, "confidence": 0.8893, "image_path": "person_005/gemini_generated_video_662b64d0/face_0008_frame000445_t018.54s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0008_frame000445_t018.54s_jump.html", "bbox": [361, 70, 50, 78]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 18.75, "timestamp_hms": "00:18.750", "frame_idx": 450, "confidence": 0.8908, "image_path": "person_005/gemini_generated_video_662b64d0/face_0009_frame000450_t018.75s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0009_frame000450_t018.75s_jump.html", "bbox": [360, 70, 48, 76]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 18.958, "timestamp_hms": "00:18.958", "frame_idx": 455, "confidence": 0.8915, "image_path": "person_005/gemini_generated_video_662b64d0/face_0010_frame000455_t018.96s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0010_frame000455_t018.96s_jump.html", "bbox": [360, 70, 50, 77]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 19.167, "timestamp_hms": "00:19.167", "frame_idx": 460, "confidence": 0.8966, "image_path": "person_005/gemini_generated_video_662b64d0/face_0011_frame000460_t019.17s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0011_frame000460_t019.17s_jump.html", "bbox": [360, 69, 51, 77]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 19.375, "timestamp_hms": "00:19.375", "frame_idx": 465, "confidence": 0.9028, "image_path": "person_005/gemini_generated_video_662b64d0/face_0012_frame000465_t019.38s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0012_frame000465_t019.38s_jump.html", "bbox": [358, 69, 50, 76]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 19.583, "timestamp_hms": "00:19.583", "frame_idx": 470, "confidence": 0.9003, "image_path": "person_005/gemini_generated_video_662b64d0/face_0013_frame000470_t019.58s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0013_frame000470_t019.58s_jump.html", "bbox": [359, 70, 51, 75]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 19.792, "timestamp_hms": "00:19.792", "frame_idx": 475, "confidence": 0.9036, "image_path": "person_005/gemini_generated_video_662b64d0/face_0014_frame000475_t019.79s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0014_frame000475_t019.79s_jump.html", "bbox": [360, 72, 49, 71]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 20.0, "timestamp_hms": "00:20.000", "frame_idx": 480, "confidence": 0.8834, "image_path": "person_005/gemini_generated_video_662b64d0/face_0015_frame000480_t020.00s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0015_frame000480_t020.00s_jump.html", "bbox": [359, 69, 49, 78]}, {"person_id": 8, "person_label": "person_008", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 21.875, "timestamp_hms": "00:21.875", "frame_idx": 525, "confidence": 0.9229, "image_path": "person_008/gemini_generated_video_662b64d0/face_0001_frame000525_t021.88s.jpg", "jump_path": "person_008/gemini_generated_video_662b64d0/face_0001_frame000525_t021.88s_jump.html", "bbox": [284, 64, 40, 49]}, {"person_id": 8, "person_label": "person_008", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 22.083, "timestamp_hms": "00:22.083", "frame_idx": 530, "confidence": 0.9278, "image_path": "person_008/gemini_generated_video_662b64d0/face_0002_frame000530_t022.08s.jpg", "jump_path": "person_008/gemini_generated_video_662b64d0/face_0002_frame000530_t022.08s_jump.html", "bbox": [305, 58, 44, 55]}, {"person_id": 8, "person_label": "person_008", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 22.292, "timestamp_hms": "00:22.292", "frame_idx": 535, "confidence": 0.937, "image_path": "person_008/gemini_generated_video_662b64d0/face_0003_frame000535_t022.29s.jpg", "jump_path": "person_008/gemini_generated_video_662b64d0/face_0003_frame000535_t022.29s_jump.html", "bbox": [316, 42, 43, 56]}, {"person_id": 8, "person_label": "person_008", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 22.5, "timestamp_hms": "00:22.500", "frame_idx": 540, "confidence": 0.9332, "image_path": "person_008/gemini_generated_video_662b64d0/face_0004_frame000540_t022.50s.jpg", "jump_path": "person_008/gemini_generated_video_662b64d0/face_0004_frame000540_t022.50s_jump.html", "bbox": [317, 42, 47, 62]}, {"person_id": 8, "person_label": "person_008", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 22.708, "timestamp_hms": "00:22.708", "frame_idx": 545, "confidence": 0.9328, "image_path": "person_008/gemini_generated_video_662b64d0/face_0005_frame000545_t022.71s.jpg", "jump_path": "person_008/gemini_generated_video_662b64d0/face_0005_frame000545_t022.71s_jump.html", "bbox": [310, 55, 49, 66]}, {"person_id": 8, "person_label": "person_008", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 22.917, "timestamp_hms": "00:22.917", "frame_idx": 550, "confidence": 0.9387, "image_path": "person_008/gemini_generated_video_662b64d0/face_0006_frame000550_t022.92s.jpg", "jump_path": "person_008/gemini_generated_video_662b64d0/face_0006_frame000550_t022.92s_jump.html", "bbox": [290, 43, 55, 72]}, {"person_id": 9, "person_label": "person_009", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 23.125, "timestamp_hms": "00:23.125", "frame_idx": 555, "confidence": 0.9129, "image_path": "person_009/gemini_generated_video_662b64d0/face_0001_frame000555_t023.12s.jpg", "jump_path": "person_009/gemini_generated_video_662b64d0/face_0001_frame000555_t023.12s_jump.html", "bbox": [353, 73, 49, 64]}, {"person_id": 9, "person_label": "person_009", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 23.333, "timestamp_hms": "00:23.333", "frame_idx": 560, "confidence": 0.9272, "image_path": "person_009/gemini_generated_video_662b64d0/face_0002_frame000560_t023.33s.jpg", "jump_path": "person_009/gemini_generated_video_662b64d0/face_0002_frame000560_t023.33s_jump.html", "bbox": [358, 65, 48, 65]}, {"person_id": 9, "person_label": "person_009", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 23.542, "timestamp_hms": "00:23.542", "frame_idx": 565, "confidence": 0.9329, "image_path": "person_009/gemini_generated_video_662b64d0/face_0003_frame000565_t023.54s.jpg", "jump_path": "person_009/gemini_generated_video_662b64d0/face_0003_frame000565_t023.54s_jump.html", "bbox": [361, 67, 48, 61]}, {"person_id": 9, "person_label": "person_009", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 23.75, "timestamp_hms": "00:23.750", "frame_idx": 570, "confidence": 0.9343, "image_path": "person_009/gemini_generated_video_662b64d0/face_0004_frame000570_t023.75s.jpg", "jump_path": "person_009/gemini_generated_video_662b64d0/face_0004_frame000570_t023.75s_jump.html", "bbox": [363, 66, 48, 63]}, {"person_id": 9, "person_label": "person_009", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 23.958, "timestamp_hms": "00:23.958", "frame_idx": 575, "confidence": 0.9338, "image_path": "person_009/gemini_generated_video_662b64d0/face_0005_frame000575_t023.96s.jpg", "jump_path": "person_009/gemini_generated_video_662b64d0/face_0005_frame000575_t023.96s_jump.html", "bbox": [361, 70, 48, 61]}, {"person_id": 9, "person_label": "person_009", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 24.167, "timestamp_hms": "00:24.167", "frame_idx": 580, "confidence": 0.9286, "image_path": "person_009/gemini_generated_video_662b64d0/face_0006_frame000580_t024.17s.jpg", "jump_path": "person_009/gemini_generated_video_662b64d0/face_0006_frame000580_t024.17s_jump.html", "bbox": [360, 71, 48, 61]}, {"person_id": 9, "person_label": "person_009", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 24.375, "timestamp_hms": "00:24.375", "frame_idx": 585, "confidence": 0.9278, "image_path": "person_009/gemini_generated_video_662b64d0/face_0007_frame000585_t024.38s.jpg", "jump_path": "person_009/gemini_generated_video_662b64d0/face_0007_frame000585_t024.38s_jump.html", "bbox": [359, 71, 48, 61]}, {"person_id": 10, "person_label": "person_010", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 25.833, "timestamp_hms": "00:25.833", "frame_idx": 620, "confidence": 0.8841, "image_path": "person_010/gemini_generated_video_662b64d0/face_0001_frame000620_t025.83s.jpg", "jump_path": "person_010/gemini_generated_video_662b64d0/face_0001_frame000620_t025.83s_jump.html", "bbox": [396, 82, 57, 79]}, {"person_id": 11, "person_label": "person_011", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 25.833, "timestamp_hms": "00:25.833", "frame_idx": 620, "confidence": 0.859, "image_path": "person_011/gemini_generated_video_662b64d0/face_0001_frame000620_t025.83s.jpg", "jump_path": "person_011/gemini_generated_video_662b64d0/face_0001_frame000620_t025.83s_jump.html", "bbox": [312, 183, 44, 64]}, {"person_id": 11, "person_label": "person_011", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.042, "timestamp_hms": "00:26.042", "frame_idx": 625, "confidence": 0.8699, "image_path": "person_011/gemini_generated_video_662b64d0/face_0002_frame000625_t026.04s.jpg", "jump_path": "person_011/gemini_generated_video_662b64d0/face_0002_frame000625_t026.04s_jump.html", "bbox": [312, 183, 45, 67]}, {"person_id": 10, "person_label": "person_010", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.042, "timestamp_hms": "00:26.042", "frame_idx": 625, "confidence": 0.8665, "image_path": "person_010/gemini_generated_video_662b64d0/face_0002_frame000625_t026.04s.jpg", "jump_path": "person_010/gemini_generated_video_662b64d0/face_0002_frame000625_t026.04s_jump.html", "bbox": [396, 86, 56, 76]}, {"person_id": 11, "person_label": "person_011", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.25, "timestamp_hms": "00:26.250", "frame_idx": 630, "confidence": 0.8613, "image_path": "person_011/gemini_generated_video_662b64d0/face_0003_frame000630_t026.25s.jpg", "jump_path": "person_011/gemini_generated_video_662b64d0/face_0003_frame000630_t026.25s_jump.html", "bbox": [312, 182, 45, 68]}, {"person_id": 10, "person_label": "person_010", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.25, "timestamp_hms": "00:26.250", "frame_idx": 630, "confidence": 0.8461, "image_path": "person_010/gemini_generated_video_662b64d0/face_0003_frame000630_t026.25s.jpg", "jump_path": "person_010/gemini_generated_video_662b64d0/face_0003_frame000630_t026.25s_jump.html", "bbox": [401, 90, 57, 78]}, {"person_id": 10, "person_label": "person_010", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.458, "timestamp_hms": "00:26.458", "frame_idx": 635, "confidence": 0.8678, "image_path": "person_010/gemini_generated_video_662b64d0/face_0004_frame000635_t026.46s.jpg", "jump_path": "person_010/gemini_generated_video_662b64d0/face_0004_frame000635_t026.46s_jump.html", "bbox": [400, 89, 59, 83]}, {"person_id": 11, "person_label": "person_011", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.458, "timestamp_hms": "00:26.458", "frame_idx": 635, "confidence": 0.8533, "image_path": "person_011/gemini_generated_video_662b64d0/face_0004_frame000635_t026.46s.jpg", "jump_path": "person_011/gemini_generated_video_662b64d0/face_0004_frame000635_t026.46s_jump.html", "bbox": [311, 182, 44, 68]}, {"person_id": 11, "person_label": "person_011", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.667, "timestamp_hms": "00:26.667", "frame_idx": 640, "confidence": 0.8688, "image_path": "person_011/gemini_generated_video_662b64d0/face_0005_frame000640_t026.67s.jpg", "jump_path": "person_011/gemini_generated_video_662b64d0/face_0005_frame000640_t026.67s_jump.html", "bbox": [312, 181, 46, 67]}, {"person_id": 10, "person_label": "person_010", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.667, "timestamp_hms": "00:26.667", "frame_idx": 640, "confidence": 0.8652, "image_path": "person_010/gemini_generated_video_662b64d0/face_0005_frame000640_t026.67s.jpg", "jump_path": "person_010/gemini_generated_video_662b64d0/face_0005_frame000640_t026.67s_jump.html", "bbox": [401, 91, 56, 79]}, {"person_id": 10, "person_label": "person_010", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.875, "timestamp_hms": "00:26.875", "frame_idx": 645, "confidence": 0.8668, "image_path": "person_010/gemini_generated_video_662b64d0/face_0006_frame000645_t026.88s.jpg", "jump_path": "person_010/gemini_generated_video_662b64d0/face_0006_frame000645_t026.88s_jump.html", "bbox": [399, 92, 59, 80]}, {"person_id": 11, "person_label": "person_011", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 26.875, "timestamp_hms": "00:26.875", "frame_idx": 645, "confidence": 0.8646, "image_path": "person_011/gemini_generated_video_662b64d0/face_0006_frame000645_t026.88s.jpg", "jump_path": "person_011/gemini_generated_video_662b64d0/face_0006_frame000645_t026.88s_jump.html", "bbox": [314, 182, 43, 63]}, {"person_id": 11, "person_label": "person_011", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 27.083, "timestamp_hms": "00:27.083", "frame_idx": 650, "confidence": 0.8669, "image_path": "person_011/gemini_generated_video_662b64d0/face_0007_frame000650_t027.08s.jpg", "jump_path": "person_011/gemini_generated_video_662b64d0/face_0007_frame000650_t027.08s_jump.html", "bbox": [313, 182, 43, 64]}, {"person_id": 10, "person_label": "person_010", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 27.083, "timestamp_hms": "00:27.083", "frame_idx": 650, "confidence": 0.8606, "image_path": "person_010/gemini_generated_video_662b64d0/face_0007_frame000650_t027.08s.jpg", "jump_path": "person_010/gemini_generated_video_662b64d0/face_0007_frame000650_t027.08s_jump.html", "bbox": [399, 96, 61, 77]}, {"person_id": 10, "person_label": "person_010", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 27.292, "timestamp_hms": "00:27.292", "frame_idx": 655, "confidence": 0.8643, "image_path": "person_010/gemini_generated_video_662b64d0/face_0008_frame000655_t027.29s.jpg", "jump_path": "person_010/gemini_generated_video_662b64d0/face_0008_frame000655_t027.29s_jump.html", "bbox": [398, 94, 60, 77]}, {"person_id": 11, "person_label": "person_011", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 27.292, "timestamp_hms": "00:27.292", "frame_idx": 655, "confidence": 0.8553, "image_path": "person_011/gemini_generated_video_662b64d0/face_0008_frame000655_t027.29s.jpg", "jump_path": "person_011/gemini_generated_video_662b64d0/face_0008_frame000655_t027.29s_jump.html", "bbox": [310, 181, 43, 64]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 27.5, "timestamp_hms": "00:27.500", "frame_idx": 660, "confidence": 0.9139, "image_path": "person_005/gemini_generated_video_662b64d0/face_0016_frame000660_t027.50s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0016_frame000660_t027.50s_jump.html", "bbox": [361, 94, 48, 63]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 27.708, "timestamp_hms": "00:27.708", "frame_idx": 665, "confidence": 0.902, "image_path": "person_005/gemini_generated_video_662b64d0/face_0017_frame000665_t027.71s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0017_frame000665_t027.71s_jump.html", "bbox": [360, 87, 49, 68]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 27.917, "timestamp_hms": "00:27.917", "frame_idx": 670, "confidence": 0.8963, "image_path": "person_005/gemini_generated_video_662b64d0/face_0018_frame000670_t027.92s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0018_frame000670_t027.92s_jump.html", "bbox": [361, 76, 50, 71]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 28.125, "timestamp_hms": "00:28.125", "frame_idx": 675, "confidence": 0.905, "image_path": "person_005/gemini_generated_video_662b64d0/face_0019_frame000675_t028.12s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0019_frame000675_t028.12s_jump.html", "bbox": [364, 73, 48, 71]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 28.333, "timestamp_hms": "00:28.333", "frame_idx": 680, "confidence": 0.8955, "image_path": "person_005/gemini_generated_video_662b64d0/face_0020_frame000680_t028.33s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0020_frame000680_t028.33s_jump.html", "bbox": [368, 72, 47, 70]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 28.542, "timestamp_hms": "00:28.542", "frame_idx": 685, "confidence": 0.894, "image_path": "person_005/gemini_generated_video_662b64d0/face_0021_frame000685_t028.54s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0021_frame000685_t028.54s_jump.html", "bbox": [366, 71, 48, 71]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_662b64d0", "video_path": "../videos/gemini_generated_video_662b64d0.mp4", "timestamp_sec": 28.75, "timestamp_hms": "00:28.750", "frame_idx": 690, "confidence": 0.9051, "image_path": "person_005/gemini_generated_video_662b64d0/face_0022_frame000690_t028.75s.jpg", "jump_path": "person_005/gemini_generated_video_662b64d0/face_0022_frame000690_t028.75s_jump.html", "bbox": [365, 73, 47, 69]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 0.625, "timestamp_hms": "00:00.625", "frame_idx": 15, "confidence": 0.9234, "image_path": "person_000/gemini_generated_video_ab8243d5/face_0001_frame000015_t000.62s.jpg", "jump_path": "person_000/gemini_generated_video_ab8243d5/face_0001_frame000015_t000.62s_jump.html", "bbox": [618, 251, 93, 120]}, {"person_id": 1, "person_label": "person_001", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 0.625, "timestamp_hms": "00:00.625", "frame_idx": 15, "confidence": 0.9157, "image_path": "person_001/gemini_generated_video_ab8243d5/face_0001_frame000015_t000.62s.jpg", "jump_path": "person_001/gemini_generated_video_ab8243d5/face_0001_frame000015_t000.62s_jump.html", "bbox": [528, 344, 40, 48]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 0.833, "timestamp_hms": "00:00.833", "frame_idx": 20, "confidence": 0.9336, "image_path": "person_000/gemini_generated_video_ab8243d5/face_0002_frame000020_t000.83s.jpg", "jump_path": "person_000/gemini_generated_video_ab8243d5/face_0002_frame000020_t000.83s_jump.html", "bbox": [588, 200, 99, 136]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 1.042, "timestamp_hms": "00:01.042", "frame_idx": 25, "confidence": 0.9385, "image_path": "person_000/gemini_generated_video_ab8243d5/face_0003_frame000025_t001.04s.jpg", "jump_path": "person_000/gemini_generated_video_ab8243d5/face_0003_frame000025_t001.04s_jump.html", "bbox": [583, 197, 105, 137]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 1.25, "timestamp_hms": "00:01.250", "frame_idx": 30, "confidence": 0.9354, "image_path": "person_000/gemini_generated_video_ab8243d5/face_0004_frame000030_t001.25s.jpg", "jump_path": "person_000/gemini_generated_video_ab8243d5/face_0004_frame000030_t001.25s_jump.html", "bbox": [620, 227, 103, 138]}, {"person_id": 1, "person_label": "person_001", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 1.25, "timestamp_hms": "00:01.250", "frame_idx": 30, "confidence": 0.9104, "image_path": "person_001/gemini_generated_video_ab8243d5/face_0002_frame000030_t001.25s.jpg", "jump_path": "person_001/gemini_generated_video_ab8243d5/face_0002_frame000030_t001.25s_jump.html", "bbox": [524, 356, 43, 53]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 1.458, "timestamp_hms": "00:01.458", "frame_idx": 35, "confidence": 0.9418, "image_path": "person_000/gemini_generated_video_ab8243d5/face_0005_frame000035_t001.46s.jpg", "jump_path": "person_000/gemini_generated_video_ab8243d5/face_0005_frame000035_t001.46s_jump.html", "bbox": [671, 188, 113, 153]}, {"person_id": 1, "person_label": "person_001", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 1.458, "timestamp_hms": "00:01.458", "frame_idx": 35, "confidence": 0.9119, "image_path": "person_001/gemini_generated_video_ab8243d5/face_0003_frame000035_t001.46s.jpg", "jump_path": "person_001/gemini_generated_video_ab8243d5/face_0003_frame000035_t001.46s_jump.html", "bbox": [525, 341, 42, 53]}, {"person_id": 0, "person_label": "person_000", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 1.667, "timestamp_hms": "00:01.667", "frame_idx": 40, "confidence": 0.9381, "image_path": "person_000/gemini_generated_video_ab8243d5/face_0006_frame000040_t001.67s.jpg", "jump_path": "person_000/gemini_generated_video_ab8243d5/face_0006_frame000040_t001.67s_jump.html", "bbox": [662, 143, 112, 150]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 2.5, "timestamp_hms": "00:02.500", "frame_idx": 60, "confidence": 0.919, "image_path": "person_002/gemini_generated_video_ab8243d5/face_0001_frame000060_t002.50s.jpg", "jump_path": "person_002/gemini_generated_video_ab8243d5/face_0001_frame000060_t002.50s_jump.html", "bbox": [544, 116, 128, 196]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 2.708, "timestamp_hms": "00:02.708", "frame_idx": 65, "confidence": 0.9446, "image_path": "person_002/gemini_generated_video_ab8243d5/face_0002_frame000065_t002.71s.jpg", "jump_path": "person_002/gemini_generated_video_ab8243d5/face_0002_frame000065_t002.71s_jump.html", "bbox": [509, 101, 130, 169]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 2.917, "timestamp_hms": "00:02.917", "frame_idx": 70, "confidence": 0.9457, "image_path": "person_002/gemini_generated_video_ab8243d5/face_0003_frame000070_t002.92s.jpg", "jump_path": "person_002/gemini_generated_video_ab8243d5/face_0003_frame000070_t002.92s_jump.html", "bbox": [501, 97, 124, 166]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 3.125, "timestamp_hms": "00:03.125", "frame_idx": 75, "confidence": 0.9446, "image_path": "person_002/gemini_generated_video_ab8243d5/face_0004_frame000075_t003.12s.jpg", "jump_path": "person_002/gemini_generated_video_ab8243d5/face_0004_frame000075_t003.12s_jump.html", "bbox": [481, 97, 127, 174]}, {"person_id": 2, "person_label": "person_002", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 3.333, "timestamp_hms": "00:03.333", "frame_idx": 80, "confidence": 0.9492, "image_path": "person_002/gemini_generated_video_ab8243d5/face_0005_frame000080_t003.33s.jpg", "jump_path": "person_002/gemini_generated_video_ab8243d5/face_0005_frame000080_t003.33s_jump.html", "bbox": [477, 100, 130, 173]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 4.167, "timestamp_hms": "00:04.167", "frame_idx": 100, "confidence": 0.9129, "image_path": "person_003/gemini_generated_video_ab8243d5/face_0001_frame000100_t004.17s.jpg", "jump_path": "person_003/gemini_generated_video_ab8243d5/face_0001_frame000100_t004.17s_jump.html", "bbox": [530, 181, 103, 132]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 4.167, "timestamp_hms": "00:04.167", "frame_idx": 100, "confidence": 0.891, "image_path": "person_004/gemini_generated_video_ab8243d5/face_0001_frame000100_t004.17s.jpg", "jump_path": "person_004/gemini_generated_video_ab8243d5/face_0001_frame000100_t004.17s_jump.html", "bbox": [768, 405, 78, 105]}, {"person_id": -1, "person_label": "unclustered", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 4.375, "timestamp_hms": "00:04.375", "frame_idx": 105, "confidence": 0.8977, "image_path": "unclustered/gemini_generated_video_ab8243d5/face_0001_frame000105_t004.38s.jpg", "jump_path": "unclustered/gemini_generated_video_ab8243d5/face_0001_frame000105_t004.38s_jump.html", "bbox": [771, 400, 81, 110]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 4.375, "timestamp_hms": "00:04.375", "frame_idx": 105, "confidence": 0.8973, "image_path": "person_003/gemini_generated_video_ab8243d5/face_0002_frame000105_t004.38s.jpg", "jump_path": "person_003/gemini_generated_video_ab8243d5/face_0002_frame000105_t004.38s_jump.html", "bbox": [535, 191, 104, 128]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 4.583, "timestamp_hms": "00:04.583", "frame_idx": 110, "confidence": 0.9033, "image_path": "person_004/gemini_generated_video_ab8243d5/face_0002_frame000110_t004.58s.jpg", "jump_path": "person_004/gemini_generated_video_ab8243d5/face_0002_frame000110_t004.58s_jump.html", "bbox": [770, 399, 89, 112]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 4.583, "timestamp_hms": "00:04.583", "frame_idx": 110, "confidence": 0.8934, "image_path": "person_003/gemini_generated_video_ab8243d5/face_0003_frame000110_t004.58s.jpg", "jump_path": "person_003/gemini_generated_video_ab8243d5/face_0003_frame000110_t004.58s_jump.html", "bbox": [534, 196, 107, 130]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 4.792, "timestamp_hms": "00:04.792", "frame_idx": 115, "confidence": 0.932, "image_path": "person_003/gemini_generated_video_ab8243d5/face_0004_frame000115_t004.79s.jpg", "jump_path": "person_003/gemini_generated_video_ab8243d5/face_0004_frame000115_t004.79s_jump.html", "bbox": [541, 196, 109, 149]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 4.792, "timestamp_hms": "00:04.792", "frame_idx": 115, "confidence": 0.9061, "image_path": "person_004/gemini_generated_video_ab8243d5/face_0003_frame000115_t004.79s.jpg", "jump_path": "person_004/gemini_generated_video_ab8243d5/face_0003_frame000115_t004.79s_jump.html", "bbox": [764, 402, 89, 110]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 5.0, "timestamp_hms": "00:05.000", "frame_idx": 120, "confidence": 0.9134, "image_path": "person_003/gemini_generated_video_ab8243d5/face_0005_frame000120_t005.00s.jpg", "jump_path": "person_003/gemini_generated_video_ab8243d5/face_0005_frame000120_t005.00s_jump.html", "bbox": [550, 213, 107, 152]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 5.0, "timestamp_hms": "00:05.000", "frame_idx": 120, "confidence": 0.8749, "image_path": "person_004/gemini_generated_video_ab8243d5/face_0004_frame000120_t005.00s.jpg", "jump_path": "person_004/gemini_generated_video_ab8243d5/face_0004_frame000120_t005.00s_jump.html", "bbox": [767, 394, 72, 99]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 5.208, "timestamp_hms": "00:05.208", "frame_idx": 125, "confidence": 0.9148, "image_path": "person_003/gemini_generated_video_ab8243d5/face_0006_frame000125_t005.21s.jpg", "jump_path": "person_003/gemini_generated_video_ab8243d5/face_0006_frame000125_t005.21s_jump.html", "bbox": [536, 215, 110, 148]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 5.208, "timestamp_hms": "00:05.208", "frame_idx": 125, "confidence": 0.8736, "image_path": "person_004/gemini_generated_video_ab8243d5/face_0005_frame000125_t005.21s.jpg", "jump_path": "person_004/gemini_generated_video_ab8243d5/face_0005_frame000125_t005.21s_jump.html", "bbox": [771, 395, 67, 96]}, {"person_id": 3, "person_label": "person_003", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 5.417, "timestamp_hms": "00:05.417", "frame_idx": 130, "confidence": 0.905, "image_path": "person_003/gemini_generated_video_ab8243d5/face_0007_frame000130_t005.42s.jpg", "jump_path": "person_003/gemini_generated_video_ab8243d5/face_0007_frame000130_t005.42s_jump.html", "bbox": [528, 216, 106, 146]}, {"person_id": 4, "person_label": "person_004", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 5.417, "timestamp_hms": "00:05.417", "frame_idx": 130, "confidence": 0.8797, "image_path": "person_004/gemini_generated_video_ab8243d5/face_0006_frame000130_t005.42s.jpg", "jump_path": "person_004/gemini_generated_video_ab8243d5/face_0006_frame000130_t005.42s_jump.html", "bbox": [772, 396, 75, 100]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 6.042, "timestamp_hms": "00:06.042", "frame_idx": 145, "confidence": 0.9555, "image_path": "person_005/gemini_generated_video_ab8243d5/face_0001_frame000145_t006.04s.jpg", "jump_path": "person_005/gemini_generated_video_ab8243d5/face_0001_frame000145_t006.04s_jump.html", "bbox": [627, 129, 112, 163]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 6.25, "timestamp_hms": "00:06.250", "frame_idx": 150, "confidence": 0.9484, "image_path": "person_005/gemini_generated_video_ab8243d5/face_0002_frame000150_t006.25s.jpg", "jump_path": "person_005/gemini_generated_video_ab8243d5/face_0002_frame000150_t006.25s_jump.html", "bbox": [639, 124, 116, 160]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 6.458, "timestamp_hms": "00:06.458", "frame_idx": 155, "confidence": 0.9457, "image_path": "person_005/gemini_generated_video_ab8243d5/face_0003_frame000155_t006.46s.jpg", "jump_path": "person_005/gemini_generated_video_ab8243d5/face_0003_frame000155_t006.46s_jump.html", "bbox": [641, 122, 114, 164]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 6.667, "timestamp_hms": "00:06.667", "frame_idx": 160, "confidence": 0.9342, "image_path": "person_005/gemini_generated_video_ab8243d5/face_0004_frame000160_t006.67s.jpg", "jump_path": "person_005/gemini_generated_video_ab8243d5/face_0004_frame000160_t006.67s_jump.html", "bbox": [644, 119, 112, 164]}, {"person_id": 5, "person_label": "person_005", "video_name": "gemini_generated_video_ab8243d5", "video_path": "../videos/gemini_generated_video_ab8243d5.mp4", "timestamp_sec": 6.875, "timestamp_hms": "00:06.875", "frame_idx": 165, "confidence": 0.9354, "image_path": "person_005/gemini_generated_video_ab8243d5/face_0005_frame000165_t006.88s.jpg", "jump_path": "person_005/gemini_generated_video_ab8243d5/face_0005_frame000165_t006.88s_jump.html", "bbox": [642, 119, 112, 169]}];
+    const VIDEOS_DATA = {"gemini_generated_video_2205156f": {"name": "gemini_generated_video_2205156f", "path": "../videos/gemini_generated_video_2205156f.mp4", "abs_path": "C:\\dev\\faceImagesExtractAndClusterFromVideo-main\\videos\\gemini_generated_video_2205156f.mp4", "face_count": 99}, "gemini_generated_video_662b64d0": {"name": "gemini_generated_video_662b64d0", "path": "../videos/gemini_generated_video_662b64d0.mp4", "abs_path": "C:\\dev\\faceImagesExtractAndClusterFromVideo-main\\videos\\gemini_generated_video_662b64d0.mp4", "face_count": 104}, "gemini_generated_video_ab8243d5": {"name": "gemini_generated_video_ab8243d5", "path": "../videos/gemini_generated_video_ab8243d5.mp4", "abs_path": "C:\\dev\\faceImagesExtractAndClusterFromVideo-main\\videos\\gemini_generated_video_ab8243d5.mp4", "face_count": 33}};
+    const PERSONS_DATA = {"0": {"id": 0, "label": "person_000", "rep_img": "person_000/gemini_generated_video_2205156f/face_0012_frame000305_t012.71s.jpg", "total_count": 31, "videos": {"gemini_generated_video_2205156f": {"count": 13, "first_sec": 0.625, "last_sec": 12.917}, "gemini_generated_video_662b64d0": {"count": 12, "first_sec": 0.625, "last_sec": 12.917}, "gemini_generated_video_ab8243d5": {"count": 6, "first_sec": 0.625, "last_sec": 1.667}}}, "1": {"id": 1, "label": "person_001", "rep_img": "person_001/gemini_generated_video_2205156f/face_0001_frame000015_t000.62s.jpg", "total_count": 6, "videos": {"gemini_generated_video_2205156f": {"count": 3, "first_sec": 0.625, "last_sec": 1.458}, "gemini_generated_video_ab8243d5": {"count": 3, "first_sec": 0.625, "last_sec": 1.458}}}, "2": {"id": 2, "label": "person_002", "rep_img": "person_002/gemini_generated_video_ab8243d5/face_0005_frame000080_t003.33s.jpg", "total_count": 15, "videos": {"gemini_generated_video_2205156f": {"count": 5, "first_sec": 2.5, "last_sec": 3.333}, "gemini_generated_video_662b64d0": {"count": 5, "first_sec": 2.5, "last_sec": 3.333}, "gemini_generated_video_ab8243d5": {"count": 5, "first_sec": 2.5, "last_sec": 3.333}}}, "3": {"id": 3, "label": "person_003", "rep_img": "person_003/gemini_generated_video_2205156f/face_0004_frame000115_t004.79s.jpg", "total_count": 41, "videos": {"gemini_generated_video_2205156f": {"count": 17, "first_sec": 4.167, "last_sec": 17.917}, "gemini_generated_video_662b64d0": {"count": 17, "first_sec": 4.167, "last_sec": 17.917}, "gemini_generated_video_ab8243d5": {"count": 7, "first_sec": 4.167, "last_sec": 5.417}}}, "4": {"id": 4, "label": "person_004", "rep_img": "person_004/gemini_generated_video_2205156f/face_0015_frame000420_t017.50s.jpg", "total_count": 35, "videos": {"gemini_generated_video_2205156f": {"count": 17, "first_sec": 4.167, "last_sec": 17.917}, "gemini_generated_video_662b64d0": {"count": 12, "first_sec": 4.583, "last_sec": 17.917}, "gemini_generated_video_ab8243d5": {"count": 6, "first_sec": 4.167, "last_sec": 5.417}}}, "5": {"id": 5, "label": "person_005", "rep_img": "person_005/gemini_generated_video_ab8243d5/face_0001_frame000145_t006.04s.jpg", "total_count": 41, "videos": {"gemini_generated_video_2205156f": {"count": 14, "first_sec": 6.042, "last_sec": 19.792}, "gemini_generated_video_662b64d0": {"count": 22, "first_sec": 6.042, "last_sec": 28.75}, "gemini_generated_video_ab8243d5": {"count": 5, "first_sec": 6.042, "last_sec": 6.875}}}, "6": {"id": 6, "label": "person_006", "rep_img": "person_006/gemini_generated_video_2205156f/face_0003_frame000325_t013.54s.jpg", "total_count": 14, "videos": {"gemini_generated_video_2205156f": {"count": 7, "first_sec": 13.125, "last_sec": 14.375}, "gemini_generated_video_662b64d0": {"count": 7, "first_sec": 13.125, "last_sec": 14.375}}}, "7": {"id": 7, "label": "person_007", "rep_img": "person_007/gemini_generated_video_2205156f/face_0005_frame000395_t016.46s.jpg", "total_count": 22, "videos": {"gemini_generated_video_2205156f": {"count": 22, "first_sec": 16.042, "last_sec": 17.917}}}, "8": {"id": 8, "label": "person_008", "rep_img": "person_008/gemini_generated_video_662b64d0/face_0006_frame000550_t022.92s.jpg", "total_count": 6, "videos": {"gemini_generated_video_662b64d0": {"count": 6, "first_sec": 21.875, "last_sec": 22.917}}}, "9": {"id": 9, "label": "person_009", "rep_img": "person_009/gemini_generated_video_662b64d0/face_0004_frame000570_t023.75s.jpg", "total_count": 7, "videos": {"gemini_generated_video_662b64d0": {"count": 7, "first_sec": 23.125, "last_sec": 24.375}}}, "10": {"id": 10, "label": "person_010", "rep_img": "person_010/gemini_generated_video_662b64d0/face_0001_frame000620_t025.83s.jpg", "total_count": 8, "videos": {"gemini_generated_video_662b64d0": {"count": 8, "first_sec": 25.833, "last_sec": 27.292}}}, "11": {"id": 11, "label": "person_011", "rep_img": "person_011/gemini_generated_video_662b64d0/face_0002_frame000625_t026.04s.jpg", "total_count": 8, "videos": {"gemini_generated_video_662b64d0": {"count": 8, "first_sec": 25.833, "last_sec": 27.292}}}};
+
+    // Navigation Tabs
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) targetTab.classList.add('active');
+      const targetBtn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
+      if (targetBtn) targetBtn.classList.add('active');
+
+      if (tabId === 'tab-mindmap') {
+        requestAnimationFrame(renderMindmap);
+      } else if (tabId === 'tab-player') {
+        setupPlayerTab();
+      } else if (tabId === 'tab-gallery') {
+        renderGallery();
+      }
+    }
+
+    // ==========================================
+    // INTERACTIVE MIND MAP ENGINE (CANVAS)
+    // ==========================================
+    const canvas = document.getElementById('mindmapCanvas');
+    const ctx = canvas.getContext('2d');
+    let nodes = [];
+    let edges = [];
+    let transform = { x: 0, y: 0, k: 1 };
+    let isDragging = false;
+    let dragNode = null;
+    let startX = 0, startY = 0;
+    let selectedNode = null;
+    const nodeImages = {};
+
+    function initMindmap() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      // Preload avatar images
+      for (const p of Object.values(PERSONS_DATA)) {
+        if (p.rep_img) {
+          const img = new Image();
+          img.src = p.rep_img;
+          nodeImages[p.id] = img;
+        }
+      }
+
+      // Build Graph Nodes
+      nodes = [];
+      edges = [];
+      const vKeys = Object.keys(VIDEOS_DATA);
+      const width = rect.width;
+      const height = rect.height;
+
+      // Video Nodes
+      vKeys.forEach((vname, idx) => {
+        const angle = (2 * Math.PI * idx) / vKeys.length - Math.PI / 2;
+        const radius = Math.min(width, height) * 0.28;
+        const vx = width / 2 + (vKeys.length === 2 ? (idx === 0 ? -180 : 180) : radius * Math.cos(angle));
+        const vy = height / 2 + (vKeys.length === 2 ? 0 : radius * Math.sin(angle));
+
+        nodes.push({
+          id: 'v_' + vname,
+          type: 'video',
+          name: vname,
+          x: vx,
+          y: vy,
+          vx: 0, vy: 0,
+          radius: 45,
+          color: idx % 2 === 0 ? '#1e3a8a' : '#064e3b',
+          borderColor: idx % 2 === 0 ? '#3b82f6' : '#10b981',
+          data: VIDEOS_DATA[vname]
+        });
+      });
+
+      // Person Nodes
+      const pList = Object.values(PERSONS_DATA);
+      pList.forEach((p, idx) => {
+        const isCross = Object.keys(p.videos).length > 1;
+        let px, py;
+        if (isCross) {
+          // Center between connected videos
+          px = width / 2 + (idx % 2 === 0 ? -20 : 20);
+          py = height / 2 - 120 + idx * 50;
+        } else {
+          const vname = Object.keys(p.videos)[0];
+          const vNode = nodes.find(n => n.id === 'v_' + vname);
+          const vIdx = vKeys.indexOf(vname);
+          const angle = Math.PI * (vIdx === 0 ? 0.6 + 0.8 * (idx / pList.length) : -0.4 + 0.8 * (idx / pList.length));
+          px = (vNode ? vNode.x : width / 2) + 160 * Math.cos(angle);
+          py = (vNode ? vNode.y : height / 2) + 160 * Math.sin(angle);
+        }
+
+        nodes.push({
+          id: 'p_' + p.id,
+          type: 'person',
+          name: p.label,
+          personId: p.id,
+          x: px,
+          y: py,
+          vx: 0, vy: 0,
+          radius: 34,
+          isCross: isCross,
+          data: p
+        });
+
+        // Edges
+        for (const [vn, stat] of Object.entries(p.videos)) {
+          edges.push({
+            source: 'p_' + p.id,
+            target: 'v_' + vn,
+            count: stat.count,
+            min_sec: stat.first_sec,
+            max_sec: stat.last_sec,
+            isCross: isCross
+          });
+        }
+      });
+
+      transform = { x: 0, y: 0, k: 1 };
+      renderMindmap();
+    }
+
+    function renderMindmap() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.save();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.translate(transform.x, transform.y);
+      ctx.scale(transform.k, transform.k);
+
+      // Draw Edges
+      edges.forEach(e => {
+        const s = nodes.find(n => n.id === e.source);
+        const t = nodes.find(n => n.id === e.target);
+        if (!s || !t) return;
+
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(t.x, t.y);
+        ctx.strokeStyle = e.isCross ? '#f59e0b' : '#38bdf8';
+        ctx.lineWidth = e.isCross ? 3.5 : 2;
+        ctx.setLineDash(e.isCross ? [] : [4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label on edge
+        const mx = (s.x + t.x) / 2;
+        const my = (s.y + t.y) / 2;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(mx - 25, my - 10, 50, 18);
+        ctx.strokeStyle = e.isCross ? '#f59e0b' : '#334155';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(mx - 25, my - 10, 50, 18);
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(e.count + 'x', mx, my - 1);
+      });
+
+      // Draw Nodes
+      nodes.forEach(n => {
+        ctx.save();
+        if (n.type === 'video') {
+          // Video Pill Box
+          ctx.beginPath();
+          ctx.roundRect(n.x - 70, n.y - 30, 140, 60, 12);
+          ctx.fillStyle = n.color;
+          ctx.fill();
+          ctx.strokeStyle = n.borderColor;
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 12px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(n.name, n.x, n.y - 6);
+
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '10px Inter, sans-serif';
+          ctx.fillText(n.data.face_count + ' ansikter funnet', n.x, n.y + 12);
+        } else {
+          // Person Avatar Node
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.radius, 0, 2 * Math.PI);
+          ctx.fillStyle = '#1e293b';
+          ctx.fill();
+
+          // Clip image
+          const img = nodeImages[n.personId];
+          if (img && img.complete) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.radius - 2, 0, 2 * Math.PI);
+            ctx.clip();
+            ctx.drawImage(img, n.x - n.radius, n.y - n.radius, n.radius * 2, n.radius * 2);
+            ctx.restore();
+          }
+
+          // Border Ring
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.radius, 0, 2 * Math.PI);
+          ctx.strokeStyle = n.isCross ? '#f59e0b' : '#38bdf8';
+          ctx.lineWidth = n.isCross ? 4.5 : 2.5;
+          ctx.stroke();
+
+          // Label
+          ctx.fillStyle = n.isCross ? '#f59e0b' : '#fff';
+          ctx.font = (n.isCross ? 'bold 11px' : '10px') + ' Inter, sans-serif';
+          ctx.textAlign = 'center';
+          const tag = n.isCross ? ' [Kryss]' : '';
+          ctx.fillText(n.name + tag, n.x, n.y + n.radius + 16);
+        }
+        ctx.restore();
+      });
+
+      ctx.restore();
+    }
+
+    // Canvas Interactions (Drag, Zoom, Click)
+    canvas.addEventListener('mousedown', e => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left - transform.x) / transform.k;
+      const my = (e.clientY - rect.top - transform.y) / transform.k;
+
+      // Find node under mouse
+      dragNode = nodes.find(n => Math.hypot(n.x - mx, n.y - my) <= (n.radius || 45));
+      if (dragNode) {
+        selectNode(dragNode);
+      } else {
+        isDragging = true;
+        startX = e.clientX - transform.x;
+        startY = e.clientY - transform.y;
+      }
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (dragNode) {
+        const rect = canvas.getBoundingClientRect();
+        dragNode.x = (e.clientX - rect.left - transform.x) / transform.k;
+        dragNode.y = (e.clientY - rect.top - transform.y) / transform.k;
+        renderMindmap();
+      } else if (isDragging) {
+        transform.x = e.clientX - startX;
+        transform.y = e.clientY - startY;
+        renderMindmap();
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      dragNode = null;
+      isDragging = false;
+    });
+
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      zoomCanvas(zoomFactor);
+    });
+
+    function zoomCanvas(factor) {
+      transform.k = Math.max(0.3, Math.min(3.0, transform.k * factor));
+      renderMindmap();
+    }
+
+    function resetCanvasView() {
+      transform = { x: 0, y: 0, k: 1 };
+      renderMindmap();
+    }
+
+    function selectNode(n) {
+      selectedNode = n;
+      document.getElementById('nodeDetailsPlaceholder').style.display = 'none';
+      const container = document.getElementById('nodeDetailsContent');
+      container.style.display = 'flex';
+
+      if (n.type === 'person') {
+        const p = n.data;
+        const appearances = FACES_DATA.filter(f => f.person_id === p.id);
+        const isCross = Object.keys(p.videos).length > 1;
+
+        let html = `
+          <img src="${p.rep_img}" class="avatar-preview" alt="${p.label}">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 1.1rem; color: #fff;">${p.label}</h2>
+            ${isCross ? '<span style="background: #f59e0b; color: #000; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">KRYSS-VIDEO</span>' : ''}
+          </div>
+          <p style="font-size: 0.85rem; color: #94a3b8;">Funnet i <strong>${Object.keys(p.videos).length}</strong> video(er) med totalt <strong>${p.total_count}</strong> ansikter.</p>
+          <div style="font-size: 0.9rem; font-weight: 600; margin-top: 6px;">Tidsstempler & Hurtighopp:</div>
+        `;
+
+        appearances.slice(0, 15).forEach(f => {
+          html += `
+            <div class="appearance-item">
+              <div>
+                <strong style="color: #38bdf8;">${f.video_name}</strong>
+                <div style="color: #94a3b8; font-size: 0.8rem;">${f.timestamp_hms} (${f.timestamp_sec.toFixed(2)}s)</div>
+              </div>
+              <button class="jump-btn-small" onclick="jumpToFromSidebar('${f.video_name}', ${f.timestamp_sec})">Hopp hit</button>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+      } else {
+        // Video Node selected
+        const v = n.data;
+        const appearances = FACES_DATA.filter(f => f.video_name === n.name);
+        const uniquePersonsInVid = [...new Set(appearances.map(f => f.person_label))];
+
+        let html = `
+          <h2 style="font-size: 1.1rem; color: #fff;">Video: ${n.name}</h2>
+          <p style="font-size: 0.85rem; color: #94a3b8;">${uniquePersonsInVid.length} unike personer, ${v.face_count} ansikter totalt.</p>
+          <div style="margin-top: 8px;">
+            <button class="tool-btn" style="width: 100%; padding: 8px;" onclick="loadVideoInPlayer('${n.name}')">Åpne Video i Spiller</button>
+          </div>
+          <div style="font-size: 0.85rem; font-weight: 600; margin-top: 10px;">Personer i denne videoen:</div>
+        `;
+
+        uniquePersonsInVid.forEach(pLbl => {
+          html += `<div class="stat-pill" style="margin-top: 4px;">${pLbl}</div>`;
+        });
+
+        container.innerHTML = html;
+      }
+    }
+
+    function selectPersonInMindmap(personId) {
+      switchTab('tab-mindmap');
+      const target = nodes.find(n => n.personId === personId);
+      if (target) {
+        selectNode(target);
+      }
+    }
+
+    // ==========================================
+    // VIDEO PLAYER TAB
+    // ==========================================
+    const player = document.getElementById('interactivePlayer');
+    const playerTimeDisplay = document.getElementById('playerTimeDisplay');
+
+    function setupPlayerTab() {
+      const select = document.getElementById('videoSelect');
+      if (select.value) {
+        loadVideoInPlayer(select.value);
+      }
+    }
+
+    function onVideoSelectChange() {
+      const select = document.getElementById('videoSelect');
+      loadVideoInPlayer(select.value);
+    }
+
+    function loadVideoInPlayer(videoName, jumpSec = null) {
+      const v = VIDEOS_DATA[videoName];
+      if (!v) return;
+
+      const select = document.getElementById('videoSelect');
+      if (select && select.value !== videoName) select.value = videoName;
+
+      const currentSrc = player.getAttribute('data-loaded-video');
+      if (currentSrc !== videoName) {
+        player.setAttribute('data-loaded-video', videoName);
+        player.src = v.path;
+        player.load();
+      }
+
+      const doSeek = () => {
+        if (jumpSec !== null) {
+          player.currentTime = jumpSec;
+          player.play().catch(e => console.log('Autoplay deferred:', e));
+        }
+      };
+
+      if (player.readyState >= 1) {
+        doSeek();
+      } else {
+        player.onloadedmetadata = () => {
+          doSeek();
+          player.onloadedmetadata = null;
+        };
+      }
+
+      // Render timeline list for this video
+      const container = document.getElementById('timelineCardsContainer');
+      const vidFaces = FACES_DATA.filter(f => f.video_name === videoName);
+      vidFaces.sort((a, b) => a.timestamp_sec - b.timestamp_sec);
+
+      let cardsHtml = '';
+      vidFaces.forEach(f => {
+        cardsHtml += `
+          <div class="timeline-card" onclick="seekPlayerTo(${f.timestamp_sec})">
+            <img class="timeline-thumb" src="${f.image_path}" alt="Ansikt">
+            <div class="timeline-info">
+              <div class="timeline-time">${f.timestamp_hms}</div>
+              <div class="timeline-meta">${f.person_label} • Ramme #${f.frame_idx}</div>
+            </div>
+            <button class="jump-btn-small">Hopp</button>
+          </div>
+        `;
+      });
+      container.innerHTML = cardsHtml || '<div style="color: #94a3b8; text-align: center; padding: 20px;">Ingen ansikter i denne videoen.</div>';
+    }
+
+    function seekPlayerTo(seconds) {
+      player.currentTime = seconds;
+      player.play().catch(e => {});
+    }
+
+    function stepPlayer(delta) {
+      player.currentTime = Math.max(0, player.currentTime + delta);
+    }
+
+    function jumpToFromSidebar(videoName, seconds) {
+      switchTab('tab-player');
+      loadVideoInPlayer(videoName, seconds);
+    }
+
+    player.addEventListener('timeupdate', () => {
+      const s = player.currentTime;
+      const m = Math.floor(s / 60);
+      const sec = (s % 60).toFixed(2);
+      playerTimeDisplay.innerText = String(m).padStart(2, '0') + ':' + String(sec).padStart(5, '0');
+    });
+
+    // ==========================================
+    // GALLERY TAB
+    // ==========================================
+    function renderGallery() {
+      const personVal = document.getElementById('personFilter').value;
+      const videoVal = document.getElementById('videoFilter').value;
+      const crossOnly = document.getElementById('crossOnlyCheck').checked;
+
+      const container = document.getElementById('galleryContainer');
+      let filtered = FACES_DATA;
+
+      if (personVal !== 'ALL') {
+        filtered = filtered.filter(f => String(f.person_id) === personVal);
+      }
+      if (videoVal !== 'ALL') {
+        filtered = filtered.filter(f => f.video_name === videoVal);
+      }
+      if (crossOnly) {
+        filtered = filtered.filter(f => {
+          const p = PERSONS_DATA[f.person_id];
+          return p && Object.keys(p.videos).length > 1;
+        });
+      }
+
+      let html = '';
+      filtered.forEach(f => {
+        const p = PERSONS_DATA[f.person_id];
+        const isCross = p && Object.keys(p.videos).length > 1;
+
+        html += `
+          <div class="face-card">
+            ${isCross ? '<div class="cross-badge">KRYSS</div>' : ''}
+            <img class="face-img" src="${f.image_path}" alt="Ansikt">
+            <div class="face-card-details">
+              <strong>${f.person_label}</strong>
+              <div style="color: #cbd5e1;">Video: ${f.video_name}</div>
+              <div class="time-badge">${f.timestamp_hms}</div>
+              <div>Ramme: #${f.frame_idx} (${(f.confidence * 100).toFixed(1)}%)</div>
+            </div>
+            <div style="display: flex; gap: 6px; margin-top: 6px;">
+              <button class="jump-btn-small" style="flex: 1;" onclick="jumpToFromSidebar('${f.video_name}', ${f.timestamp_sec})">Hopp til video</button>
+              ${f.jump_path ? `<a href="${f.jump_path}" target="_blank" class="tool-btn" style="text-decoration: none;" title="Åpne direkte hoppfil">Fil</a>` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html || '<div style="color: #94a3b8; grid-column: 1/-1; text-align: center; padding: 40px;">Ingen ansikter matcher filteret.</div>';
+    }
+
+    // Initialize on window load
+    window.addEventListener('DOMContentLoaded', () => {
+      initMindmap();
+      renderGallery();
+    });
+  </script>
+</body>
+</html>
