@@ -2,7 +2,7 @@
 
 An intelligent, lightweight, and robust Python system that extracts human faces across one or multiple videos, recognizes unique identities using deep neural network embeddings, automatically clusters them into organized folders by person ID and source video, provides one-click jump-to-timestamp links for every face, and visualizes connections between videos and people through conceptual mind maps (tankediagram).
 
-## NB! This web-site has a MIT license
+## NB! This web solution has a MIT license
 This WEB solution uses follwing third-party AI models:
 - YUNET_URL = "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx" (has MIT license)
 - SFACE_URL = "https://github.com/opencv/opencv_zoo/raw/main/models/face_recognition_sface/face_recognition_sface_2021dec.onnx" (has apache commons 2.0 license)
